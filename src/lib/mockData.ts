@@ -75,7 +75,7 @@ export interface FishTrendData {
 // ── Constants ──────────────────────────────────
 
 export const LANGUAGES = [
-  { code: "en", label: "English", flag: "🇬🇧" },
+  { code: "en", label: "English", flag: "🇮🇳" },
   { code: "ta", label: "தமிழ்", flag: "🇮🇳" },
   { code: "te", label: "తెలుగు", flag: "🇮🇳" },
   { code: "ml", label: "മലയാളം", flag: "🇮🇳" },

@@ -133,12 +133,9 @@ export default function FishermenMode() {
 
     setTimeout(() => {
       setIsSpeaking(false);
-      if (query.includes("IMBL")) {
-        setAiResponse("You are 18.4 nautical miles from the International Maritime Boundary Line. Current position is within safe zone. Maintain heading and monitor GPS alerts.");
-      } else if (query.includes("PFZ")) {
-        setAiResponse("Nearest PFZ: Zone B (12 nm SW). High fish productivity expected. Water temperature optimal at 28.4°C. Recommend departing within 2 hours.");
-      } else {
-        setAiResponse("Next 24h forecast: Waves 1.8m → 2.4m by evening. Wind SW 14→18 knots. Recommend morning departure. Sea surface temp stable at 28.4°C.");
+      if (query.includes("IMBL")) {                setAiResponse("You are 18.4 nautical miles from the International Maritime Boundary Line. Your current position is within the safe zone. Maintain your heading and keep monitoring GPS alerts.");
+      } else if (query.includes("PFZ")) {                setAiResponse("Nearest Potential Fishing Zone: Zone B, approximately 12 nautical miles southwest. High fish productivity is expected. Water temperature is optimal at 28.4°C. I recommend departing within the next two hours for the best catch window.");
+      } else {                setAiResponse("Next 24-hour forecast: Waves currently at 1.8 metres, rising to 2.4 metres by evening. South-westerly winds building from 14 to 18 knots. A morning departure is strongly recommended. Sea surface temperature stable at 28.4°C.");
       }
     }, 1200);
   }, []);
@@ -386,7 +383,7 @@ export default function FishermenMode() {
           </motion.button>
         </div>
         <p className="text-center text-[10px] text-white/30 mt-3">
-          {isSpeaking ? "Listening..." : "Tap to Speak in Vernacular"}
+          {isSpeaking ? "Listening..." : "Tap & Hold to Speak in Vernacular"}
         </p>
       </div>
 

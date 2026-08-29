@@ -21,37 +21,37 @@ const features = [
   {
     icon: Satellite,
     title: "ISRO MOSDAC Data",
-    desc: "Real-time sea surface temperature feeds from ISRO's MOSDAC satellite constellation.",
+    desc: "Real-time sea surface temperature feeds from ISRO's MOSDAC satellite constellation, tracking thermal gradients across the Bay of Bengal.",
     color: "#22c55e",
   },
   {
     icon: Cloud,
     title: "INCOIS Weather",
-    desc: "Ocean state forecasts, wave heights, and wind vectors from INCOIS.",
+    desc: "Ocean state forecasts with wave heights, wind vectors, and tidal predictions from the Indian National Centre for Ocean Information Services.",
     color: "#38bdf8",
   },
   {
     icon: Mic,
     title: "Bhashini Voice",
-    desc: "Speak in Tamil, Telugu, Malayalam, or 5+ Indian languages. AI understands all.",
+    desc: "Speak in Tamil, Telugu, Malayalam, Gujarati, Bengali, Hindi, or English. The AI understands all of them — no typing required.",
     color: "#FEE440",
   },
   {
     icon: Shield,
     title: "Border Safety",
-    desc: "IMBL geofencing with instant alerts when approaching international waters.",
+    desc: "Real-time geofencing against the International Maritime Boundary Line with instant visual and audio alerts.",
     color: "#FF0054",
   },
   {
     icon: Navigation,
     title: "A* Safe Routing",
-    desc: "AI-powered pathfinding that avoids storm zones and hazardous currents.",
+    desc: "AI-powered A* pathfinding that charts safe routes, avoiding storm zones, high-swell corridors, and hazardous currents.",
     color: "#a78bfa",
   },
   {
     icon: Eye,
     title: "GIS Overlay System",
-    desc: "Layer SST, chlorophyll, PFZ vectors, and wind data on a single map canvas.",
+    desc: "Toggle sea surface temperature, chlorophyll concentration, potential fishing zones, and wind overlays on a unified map canvas.",
     color: "#2dd4bf",
   },
 ];
@@ -144,7 +144,7 @@ export default function Landing({ onEnterMode }: LandingProps) {
             >
               <Radio className="size-3.5 text-[#FEE440]" />
               <span className="text-xs font-medium text-[#FEE440]/90">
-                AI-Powered Marine Intelligence Platform
+                Marine Safety & Intelligence Platform
               </span>
             </motion.div>
 
@@ -156,16 +156,15 @@ export default function Landing({ onEnterMode }: LandingProps) {
               </h1>
             </div>
 
-            <p className="text-lg sm:text-xl text-white/60 max-w-2xl mx-auto mb-2">
-              Every 12 minutes, a boat leaves.
-            </p>
-            <p className="text-2xl sm:text-3xl font-bold text-white/90 mb-8">
-              SeaSathi ensures they return.
+            <p className="text-xl sm:text-2xl font-bold text-white/80 mb-8">
+              Every 12 minutes, a fishing boat leaves Indian shores.
+              <br className="hidden sm:block" />
+              <span className="text-[#FEE440]">SeaSathi ensures they return.</span>
             </p>
 
             {/* Feature badges */}
             <div className="flex flex-wrap items-center justify-center gap-2 mb-10">
-              {["ISRO Data", "INCOIS Weather", "Bhashini Voice", "Border Safety"].map(
+              {["ISRO Satellite Data", "INCOIS Ocean Forecasts", "Bhashini Vernacular Voice", "IMBL Border Safety"].map(
                 (tag, i) => (
                   <motion.span
                     key={tag}
@@ -189,7 +188,7 @@ export default function Landing({ onEnterMode }: LandingProps) {
                 onClick={() => onEnterMode("fishermen")}
               >
                 <Ship className="size-4" />
-                Fishermen Field Mode
+                Open Field Mode
                 <ChevronRight className="size-4" />
               </motion.button>
               <motion.button
@@ -243,8 +242,8 @@ export default function Landing({ onEnterMode }: LandingProps) {
               Intelligence from <span className="text-[#FEE440]">Space to Sea</span>
             </h2>
             <p className="text-white/50 max-w-xl mx-auto">
-              Combining satellite data, ocean forecasting, vernacular AI, and real-time
-              geofencing to protect India's fishermen.
+              Combining ISRO satellite feeds, INCOIS ocean forecasting, vernacular AI, and
+              real-time geofencing — all purpose-built to protect India's fishermen.
             </p>
           </motion.div>
 
@@ -285,9 +284,9 @@ export default function Landing({ onEnterMode }: LandingProps) {
               Protecting Those Who <span className="text-[#22c55e]">Feed a Nation</span>
             </h2>
             <p className="text-white/50 mb-8 max-w-lg mx-auto">
-              India's fishermen venture into unpredictable waters daily. SeaSathi
-              gives them — and those who protect them — the intelligence to act,
-              not guess.
+              India's fishermen venture into unpredictable waters every single day. SeaSathi
+              equips them — and the authorities who protect them — with the intelligence
+              to act, not guess.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <motion.button
@@ -297,7 +296,7 @@ export default function Landing({ onEnterMode }: LandingProps) {
                 onClick={() => onEnterMode("fishermen")}
               >
                 <Ship className="size-4" />
-                Launch Field Mode
+                Open Field Mode
               </motion.button>
               <motion.button
                 className="flex items-center gap-2 rounded-xl border border-white/20 bg-white/5 px-8 py-3.5 text-sm font-bold text-white"

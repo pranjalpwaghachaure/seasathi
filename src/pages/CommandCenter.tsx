@@ -320,7 +320,7 @@ export default function CommandCenter() {
             </div>
             <div>
               <h2 className="text-sm font-bold text-white">AI Intelligence</h2>
-              <p className="text-[10px] text-white/40">Agentic Reasoning Engine</p>
+              <p className="text-[10px] text-white/40">Agentic Reasoning & Evidence Chain</p>
             </div>
           </div>
 
@@ -467,7 +467,7 @@ export default function CommandCenter() {
           <div className="flex items-center gap-2 rounded-xl border border-white/[0.08] bg-white/[0.03] px-3 py-2">
             <input
               className="flex-1 bg-transparent text-xs text-white placeholder:text-white/30 outline-none"
-              placeholder="Ask a natural language query..."
+              placeholder="Ask a question about ocean conditions, routes, or safety..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSend()}
@@ -597,7 +597,7 @@ export default function CommandCenter() {
           <div className="p-3 border-b border-white/[0.06]">
             <div className="flex items-center gap-2 mb-3">
               <Fish className="size-3.5 text-emerald-400" />
-              <span className="text-xs font-bold text-white">Fish Productivity Trends</span>
+              <span className="text-xs font-bold text-white">Fish Productivity</span>
             </div>
             <div className="space-y-3">
               {["PFZ-A", "PFZ-B", "PFZ-C"].map((zone) => {
@@ -649,18 +649,18 @@ export default function CommandCenter() {
           <div className="p-3">
             <div className="flex items-center gap-2 mb-3">
               <Radio className="size-3.5 text-[#FF0054]" />
-              <span className="text-xs font-bold text-white">Emergency Broadcast</span>
+              <span className="text-xs font-bold text-white">Vernacular Broadcast</span>
             </div>
             <div className="rounded-xl border border-[#FF0054]/20 bg-[#FF0054]/5 p-4">
               <p className="text-[11px] text-white/60 mb-3 leading-relaxed">
-                Send urgent safety alerts to all fishing vessels in range via vernacular voice broadcast.
+                Send urgent safety alerts to all fishing vessels in range, translated into local vernacular languages automatically.
               </p>
               <Button
                 size="sm"
                 className="w-full bg-[#FF0054] hover:bg-[#FF0054]/80 text-white font-bold text-xs gap-2"
               >
                 <Radio className="size-3.5" />
-                Send Vernacular Broadcast
+                Broadcast Safety Alert
               </Button>
               <div className="mt-3 flex flex-wrap gap-1.5">
                 {["Tamil", "Telugu", "Malayalam", "Hindi", "Bengali"].map((lang) => (

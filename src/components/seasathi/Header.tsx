@@ -54,7 +54,7 @@ export default function Header({
             </span>
           </div>
           <span className="hidden md:inline-flex items-center rounded-full border border-[#FEE440]/20 bg-[#FEE440]/5 px-3 py-1 text-[11px] font-medium text-[#FEE440]/80">
-            Every 12 minutes, a boat leaves. SeaSathi ensures they return.
+            Every 12 minutes, a fishing boat leaves Indian shores. SeaSathi ensures they return.
           </span>
         </div>
 

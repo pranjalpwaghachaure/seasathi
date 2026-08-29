@@ -43,7 +43,7 @@ export default function SeaSathiApp() {
       {sosActive && (
         <div className="fixed inset-0 z-[99999] flex items-center justify-center pointer-events-none">
           <div className="bg-[#FF0054] text-white px-8 py-4 rounded-xl text-xl font-black shadow-2xl shadow-[#FF0054]/50 animate-pulse">
-            🚨 SOS SIGNAL TRANSMITTED
+            🚨 SOS SIGNAL TRANSMITTED — Help is on the way
           </div>
         </div>
       )}
