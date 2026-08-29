@@ -217,25 +217,27 @@ export default function Landing({ onEnterMode }: LandingProps) {
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.2 }}
             >
-              <Radio className="size-3.5 text-[#00D2FF]" />
-              <span className="text-xs font-medium text-[#00D2FF]/90">
-                AI-Powered Marine Intelligence Platform
+              <Radio className="size-3.5 text-[#00D2FF] animate-pulse" />
+              <span className="text-xs font-medium text-[#00D2FF]">
+                ((•)) AI-Powered Marine Intelligence Platform
               </span>
             </motion.div>
 
             {/* Title */}
-            <div className="flex items-center justify-center gap-3 mb-6">
-              <Waves className="size-10 text-[#00D2FF]" />
-              <h1 className="text-5xl sm:text-7xl font-black tracking-tight text-white">
+            <div className="flex items-center justify-center gap-3 mb-5">
+              <Waves className="size-12 text-[#00D2FF]" />
+              <h1 className="text-6xl sm:text-8xl font-black tracking-tight text-white">
                 Sea<span className="text-[#00D2FF]">Sathi</span>
               </h1>
             </div>
 
-            {/* Tagline */}
+            {/* Main Slogan */}
             <p className="text-xl sm:text-2xl font-bold text-white/90 mb-8 max-w-3xl mx-auto leading-relaxed">
               Every 12 minutes, a fishing boat leaves Indian shores.
               <br />
-              <span className="text-[#00D2FF]">SeaSathi ensures they return.</span>
+              <span className="bg-gradient-to-r from-[#00D2FF] to-[#22c55e] bg-clip-text text-transparent font-black">
+                SeaSathi ensures they return.
+              </span>
             </p>
 
             {/* Feature pills */}
@@ -263,17 +265,17 @@ export default function Landing({ onEnterMode }: LandingProps) {
                 whileTap={{ scale: 0.97 }}
                 onClick={() => onEnterMode("fishermen")}
               >
-                <Ship className="size-4" />
+                <span className="text-base">⛵</span>
                 Open Field Mode
                 <ChevronRight className="size-4" />
               </motion.button>
               <motion.button
-                className="flex items-center gap-2 rounded-xl border border-white/20 bg-white/5 px-8 py-3.5 text-sm font-bold text-white backdrop-blur hover:bg-white/10 transition-colors"
+                className="flex items-center gap-2 rounded-xl border border-white/25 bg-white/[0.06] px-8 py-3.5 text-sm font-bold text-white backdrop-blur-xl shadow-lg hover:bg-white/10 hover:border-white/35 transition-all"
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
                 onClick={() => onEnterMode("command")}
               >
-                <Globe className="size-4" />
+                <span className="text-base">🌐</span>
                 Open Command Center
                 <ChevronRight className="size-4" />
               </motion.button>

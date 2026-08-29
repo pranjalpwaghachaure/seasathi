@@ -23,7 +23,7 @@ export default function SeaSathiApp() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#0A1128]">
+    <div className="min-h-screen bg-[#071A2E]">
       <Header
         mode={mode}
         onModeChange={handleModeChange}

@@ -1,14 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  Waves,
-  MapPin,
-  Monitor,
-  Smartphone,
-  AlertTriangle,
-  ChevronDown,
-  ArrowLeft,
-} from "lucide-react";
+import { Waves, AlertTriangle, ChevronDown, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LANGUAGES } from "@/lib/mockData";
 
@@ -33,39 +25,36 @@ export default function Header({
   const currentLang = LANGUAGES.find((l) => l.code === language) ?? LANGUAGES[0];
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 h-16 border-b border-white/[0.08] bg-[#0A1128]/90 backdrop-blur-xl">
+    <header className="fixed top-0 left-0 right-0 z-50 h-16 border-b border-white/[0.08] bg-[#071A2E]/80 backdrop-blur-xl">
       <div className="flex h-full items-center justify-between px-4 lg:px-6">
-        {/* Left: Back + Logo + Tagline */}
-        <div className="flex items-center gap-3">
+        {/* Left: Back (when in mode) + Logo */}
+        <div className="flex items-center gap-2">
           {mode !== "landing" && (
             <Button
               variant="ghost"
               size="icon-sm"
-              className="text-[#FEE440] hover:bg-[#FEE440]/10"
+              className="text-[#00D2FF] hover:bg-[#00D2FF]/10"
               onClick={() => onModeChange("landing")}
             >
               <ArrowLeft className="size-4" />
             </Button>
           )}
-          <div className="flex items-center gap-2">
-            <Waves className="size-6 text-[#FEE440]" />
+          <div className="flex items-center gap-2 cursor-pointer" onClick={() => onModeChange("landing")}>
+            <Waves className="size-6 text-[#00D2FF]" />
             <span className="text-lg font-bold tracking-tight text-white">
               SeaSathi
             </span>
           </div>
-          <span className="hidden md:inline-flex items-center rounded-full border border-[#FEE440]/20 bg-[#FEE440]/5 px-3 py-1 text-[11px] font-medium text-[#FEE440]/80">
-            Every 12 minutes, a fishing boat leaves Indian shores. SeaSathi ensures they return.
-          </span>
         </div>
 
-        {/* Right: Controls */}
+        {/* Right: Language Selector + SOS */}
         <div className="flex items-center gap-2">
           {/* Language Selector */}
           <div className="relative">
             <Button
               variant="ghost"
               size="sm"
-              className="gap-1.5 text-white/70 hover:text-[#FEE440] hover:bg-[#FEE440]/10 text-xs"
+              className="gap-1.5 text-white/70 hover:text-[#00D2FF] hover:bg-[#00D2FF]/10 text-xs"
               onClick={() => setLangOpen(!langOpen)}
             >
               <span>{currentLang.flag}</span>
@@ -90,7 +79,7 @@ export default function Header({
                         key={lang.code}
                         className={`flex w-full items-center gap-2 px-3 py-2 text-sm transition-colors ${
                           language === lang.code
-                            ? "bg-[#FEE440]/10 text-[#FEE440]"
+                            ? "bg-[#00D2FF]/10 text-[#00D2FF]"
                             : "text-white/70 hover:bg-white/5 hover:text-white"
                         }`}
                         onClick={() => {
@@ -107,46 +96,6 @@ export default function Header({
               )}
             </AnimatePresence>
           </div>
-
-          {/* GPS Status Pill */}
-          {mode !== "landing" && (
-            <div className="hidden sm:flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1">
-              <MapPin className="size-3 text-emerald-400" />
-              <span className="text-[11px] font-medium text-emerald-400">
-                GPS Active — Vizag Coast
-              </span>
-            </div>
-          )}
-
-          {/* Mode Toggle */}
-          {mode !== "landing" && (
-            <div className="flex rounded-lg border border-white/10 bg-white/5 p-0.5">
-              <button
-                className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
-                  mode === "fishermen"
-                    ? "bg-[#FEE440] text-[#0A1128] shadow-lg shadow-[#FEE440]/20"
-                    : "text-white/50 hover:text-white/80"
-                }`}
-                onClick={() => onModeChange("fishermen")}
-              >
-                <Smartphone className="size-3.5" />
-                <span className="hidden lg:inline">Fishermen Mode</span>
-                <span className="lg:hidden">Field</span>
-              </button>
-              <button
-                className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
-                  mode === "command"
-                    ? "bg-[#FEE440] text-[#0A1128] shadow-lg shadow-[#FEE440]/20"
-                    : "text-white/50 hover:text-white/80"
-                }`}
-                onClick={() => onModeChange("command")}
-              >
-                <Monitor className="size-3.5" />
-                <span className="hidden lg:inline">Command Center</span>
-                <span className="lg:hidden">HQ</span>
-              </button>
-            </div>
-          )}
 
           {/* SOS Button */}
           <Button
