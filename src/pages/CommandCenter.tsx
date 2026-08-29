@@ -30,9 +30,11 @@ import {
   Clock,
   Shield,
   Fish,
+  Volume2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import FuelSavingsCard from "@/components/seasathi/FuelSavingsCard";
 import {
   MAP_CENTER,
   MAP_ZOOM,
@@ -436,9 +438,28 @@ export default function CommandCenter() {
                       ))}
                     </div>
                   )}
-                  <div className="mt-1 text-[9px] text-white/30 flex items-center gap-1">
-                    <Clock className="size-2.5" />
-                    {msg.timestamp}
+                  <div className="mt-1 flex items-center gap-2">
+                    <span className="text-[9px] text-white/30 flex items-center gap-1">
+                      <Clock className="size-2.5" />
+                      {msg.timestamp}
+                    </span>
+                    {msg.role === "assistant" && (
+                      <button
+                        className="text-[9px] text-cyan-400/60 hover:text-cyan-300 flex items-center gap-1 transition-colors"
+                        onClick={() => {
+                          try {
+                            const synth = window.speechSynthesis;
+                            synth.cancel();
+                            const u = new SpeechSynthesisUtterance(msg.content.replace(/[🐟🌊⚠️⛈️✅]/g, ""));
+                            u.rate = 0.9;
+                            synth.speak(u);
+                          } catch { /* ignore */ }
+                        }}
+                      >
+                        <Volume2 className="size-2.5" />
+                        Listen
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -643,6 +664,11 @@ export default function CommandCenter() {
                 );
               })}
             </div>
+          </div>
+
+          {/* Fuel Savings */}
+          <div className="p-3 border-b border-white/[0.06]">
+            <FuelSavingsCard />
           </div>
 
           {/* Emergency Broadcast */}

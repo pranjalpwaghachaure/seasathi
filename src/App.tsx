@@ -3,11 +3,12 @@ import Header, { type AppMode } from "@/components/seasathi/Header";
 import Landing from "@/pages/Landing";
 import FishermenMode from "@/pages/FishermenMode";
 import CommandCenter from "@/pages/CommandCenter";
+import SOSModal from "@/components/seasathi/SOSModal";
 
 export default function SeaSathiApp() {
   const [mode, setMode] = useState<AppMode>("landing");
   const [language, setLanguage] = useState("en");
-  const [sosActive, setSosActive] = useState(false);
+  const [sosOpen, setSosOpen] = useState(false);
 
   const handleModeChange = useCallback((newMode: AppMode) => {
     setMode(newMode);
@@ -18,8 +19,7 @@ export default function SeaSathiApp() {
   }, []);
 
   const handleSOS = useCallback(() => {
-    setSosActive(true);
-    setTimeout(() => setSosActive(false), 3000);
+    setSosOpen(true);
   }, []);
 
   return (
@@ -39,14 +39,8 @@ export default function SeaSathiApp() {
         {mode === "command" && <CommandCenter />}
       </main>
 
-      {/* SOS Overlay */}
-      {sosActive && (
-        <div className="fixed inset-0 z-[99999] flex items-center justify-center pointer-events-none">
-          <div className="bg-[#EF4444] text-white px-8 py-4 rounded-xl text-xl font-black shadow-2xl shadow-[#EF4444]/50 animate-pulse">
-            🚨 SOS SIGNAL TRANSMITTED — Help is on the way
-          </div>
-        </div>
-      )}
+      {/* SOS Modal */}
+      <SOSModal isOpen={sosOpen} onClose={() => setSosOpen(false)} />
     </div>
   );
 }

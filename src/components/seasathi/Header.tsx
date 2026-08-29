@@ -47,6 +47,24 @@ export default function Header({
           </div>
         </div>
 
+        {/* Center: Satellite Status (when in mode) */}
+        {mode !== "landing" && (
+          <div className="hidden lg:flex items-center gap-3">
+            <div className="flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1">
+              <div className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="text-[10px] font-medium text-emerald-400">
+                NavIC Satellite Link: Active
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5 rounded-full border border-cyan-500/30 bg-cyan-500/10 px-3 py-1">
+              <div className="size-1.5 rounded-full bg-cyan-400" />
+              <span className="text-[10px] font-medium text-cyan-400">
+                Mesh Cache: Ready
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* Right: Language Selector + SOS */}
         <div className="flex items-center gap-2">
           {/* Language Selector */}

@@ -98,6 +98,7 @@ function MapInvalidator({ center }: { center: [number, number] }) {
 }
 
 import FishermenChatbot from "@/components/seasathi/FishermenChatbot";
+import IMBLAlertBanner from "@/components/seasathi/IMBLAlertBanner";
 
 /* ── Main Fishermen Mode Component ─────────── */
 export default function FishermenMode({ language = "en" }: { language?: string }) {
@@ -108,6 +109,8 @@ export default function FishermenMode({ language = "en" }: { language?: string }
   const [aiResponse, setAiResponse] = useState("");
   const [showBorderAlert, setShowBorderAlert] = useState(false);
   const [simulating, setSimulating] = useState(false);
+  const [imblAlertActive, setImblAlertActive] = useState(false);
+  const [imblDistance, setImblDistance] = useState(18.4);
   const waveformRef = useRef<HTMLDivElement>(null);
 
   const status = getSafetyStatus(weather);
@@ -144,6 +147,8 @@ export default function FishermenMode({ language = "en" }: { language?: string }
 
   const handleSimulateBorder = useCallback(() => {
     setSimulating(true);
+    setImblAlertActive(true);
+    setImblDistance(18.4);
     // Gradually move boat towards IMBL
     let step = 0;
     const interval = setInterval(() => {
@@ -151,6 +156,7 @@ export default function FishermenMode({ language = "en" }: { language?: string }
       const lat = USER_BOAT.lat + (BORDER_CROSSING_TARGET.lat - USER_BOAT.lat) * (step / 20);
       const lng = USER_BOAT.lng + (BORDER_CROSSING_TARGET.lng - USER_BOAT.lng) * (step / 20);
       setBoat((prev) => ({ ...prev, lat, lng, heading: 90 }));
+      setImblDistance(Math.max(0.5, 18.4 - step * 0.9));
 
       if (step >= 15) {
         setShowBorderAlert(true);
@@ -164,11 +170,15 @@ export default function FishermenMode({ language = "en" }: { language?: string }
 
   const handleDismissAlert = useCallback(() => {
     setShowBorderAlert(false);
+    setImblAlertActive(false);
+    setImblDistance(18.4);
     setBoat(USER_BOAT);
   }, []);
 
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)]">
+      {/* IMBL Proximity Alert Banner */}
+      <IMBLAlertBanner isActive={imblAlertActive} distanceNM={imblDistance} />
       {/* ── Safety Status Banner ────────────────────── */}
       <motion.div
         className="relative mx-3 mt-3 rounded-xl border p-4 flex-shrink-0"
