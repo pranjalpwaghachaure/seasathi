@@ -25,7 +25,7 @@ export default function Header({
   const currentLang = LANGUAGES.find((l) => l.code === language) ?? LANGUAGES[0];
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 h-16 border-b border-white/[0.08] bg-[#071A2E]/80 backdrop-blur-xl">
+    <header className="fixed top-0 left-0 right-0 z-50 h-16 border-b border-white/[0.08] bg-[#061424]/80 backdrop-blur-xl">
       <div className="flex h-full items-center justify-between px-4 lg:px-6">
         {/* Left: Back (when in mode) + Logo */}
         <div className="flex items-center gap-2">
@@ -101,7 +101,7 @@ export default function Header({
           <Button
             variant="destructive"
             size="sm"
-            className="gap-1.5 bg-[#FF0054] hover:bg-[#FF0054]/80 text-white shadow-lg shadow-[#FF0054]/20 font-bold text-xs"
+            className="gap-1.5 bg-[#EF4444] hover:bg-[#EF4444]/80 text-white shadow-lg shadow-[#EF4444]/20 font-bold text-xs"
             onClick={onSOS}
           >
             <AlertTriangle className="size-3.5" />

@@ -58,13 +58,13 @@ const capabilities = [
     icon: Eye,
     title: "Explainable Recommendations",
     desc: "Every suggestion includes source data attribution, confidence scores, and transparent reasoning chains.",
-    color: "#FEE440",
+    color: "#FACC15",
   },
   {
     icon: AlertTriangle,
     title: "Proactive Safety Alerts",
     desc: "Cyclone warnings, high-wave advisories, lightning proximity, and IMBL geofencing — all delivered in real time.",
-    color: "#FF0054",
+    color: "#EF4444",
   },
   {
     icon: Map,
@@ -103,13 +103,13 @@ const agents = [
     icon: Radar,
     name: "Geospatial Reasoning Agent",
     desc: "Runs A* pathfinding across spatial hazard layers to compute safe routes avoiding storm corridors.",
-    color: "#FEE440",
+    color: "#FACC15",
   },
   {
     icon: Shield,
     name: "Safety & Alerts Agent",
     desc: "Monitors IMBL proximity, generates border warnings, and broadcasts multilingual emergency alerts.",
-    color: "#FF0054",
+    color: "#EF4444",
   },
 ];
 
@@ -154,7 +154,7 @@ export default function Landing({ onEnterMode }: LandingProps) {
       {/* ═══════════════════════════════════════════
           HERO SECTION — Dark Oceanic
          ═══════════════════════════════════════════ */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-b from-[#071A2E] via-[#0B2640] to-[#0F3854]">
+      <section className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gradient-to-b from-[#061424] via-[#0B253C] to-[#0B253C]">
         {/* Animated wave layers */}
         <svg
           className="absolute bottom-0 left-0 w-[200%] wave-anim opacity-15"
@@ -260,7 +260,7 @@ export default function Landing({ onEnterMode }: LandingProps) {
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <motion.button
-                className="flex items-center gap-2 rounded-xl bg-[#00D2FF] px-8 py-3.5 text-sm font-bold text-[#071A2E] shadow-2xl shadow-[#00D2FF]/25 hover:shadow-[#00D2FF]/40 transition-shadow"
+                className="flex items-center gap-2 rounded-xl bg-[#00D2FF] px-8 py-3.5 text-sm font-bold text-[#061424] shadow-2xl shadow-[#00D2FF]/25 hover:shadow-[#00D2FF]/40 transition-shadow"
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
                 onClick={() => onEnterMode("fishermen")}
@@ -270,7 +270,7 @@ export default function Landing({ onEnterMode }: LandingProps) {
                 <ChevronRight className="size-4" />
               </motion.button>
               <motion.button
-                className="flex items-center gap-2 rounded-xl border border-white/25 bg-white/[0.06] px-8 py-3.5 text-sm font-bold text-white backdrop-blur-xl shadow-lg hover:bg-white/10 hover:border-white/35 transition-all"
+                className="flex items-center gap-2 rounded-xl border border-slate-500/30 bg-slate-900/40 px-8 py-3.5 text-sm font-bold text-white backdrop-blur-md shadow-lg hover:bg-slate-800/50 hover:border-slate-400/40 transition-all"
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
                 onClick={() => onEnterMode("command")}
@@ -299,8 +299,8 @@ export default function Landing({ onEnterMode }: LandingProps) {
                 transition={{ delay: i * 0.1 }}
                 viewport={{ once: true }}
               >
-                <div className="inline-flex items-center justify-center rounded-xl bg-[#071A2E]/5 p-3 mb-3">
-                  <m.icon className="size-6 text-[#0F3854]" />
+                <div className="inline-flex items-center justify-center rounded-xl bg-[#061424]/5 p-3 mb-3">
+                  <m.icon className="size-6 text-[#0B253C]" />
                 </div>
                 <div className="text-3xl sm:text-4xl font-black text-[#0F172A] mb-1">{m.value}</div>
                 <div className="text-sm text-gray-500 font-medium">{m.label}</div>
@@ -423,11 +423,11 @@ export default function Landing({ onEnterMode }: LandingProps) {
             whileInView={{ opacity: 1 }}
             viewport={{ once: true }}
           >
-            <span className="inline-block rounded-full bg-[#0F3854]/10 text-[#0F3854] text-xs font-semibold px-3 py-1 mb-4">
+            <span className="inline-block rounded-full bg-[#0B253C]/10 text-[#0B253C] text-xs font-semibold px-3 py-1 mb-4">
               PROCESS
             </span>
             <h2 className="text-3xl sm:text-4xl font-black text-[#0F172A] mb-3">
-              From Query to <span className="text-[#0F3854]">Recommendation</span>
+              From Query to <span className="text-[#0B253C]">Recommendation</span>
             </h2>
             <p className="text-gray-500 max-w-lg mx-auto">
               Ask a question in your language. The agentic pipeline handles the rest.
@@ -450,7 +450,7 @@ export default function Landing({ onEnterMode }: LandingProps) {
                 >
                   {/* Step number circle */}
                   <div className="relative z-10 flex-shrink-0">
-                    <div className="flex items-center justify-center size-12 rounded-full bg-[#0F3854] text-white text-sm font-black shadow-lg">
+                    <div className="flex items-center justify-center size-12 rounded-full bg-[#0B253C] text-white text-sm font-black shadow-lg">
                       {step.num}
                     </div>
                   </div>
@@ -504,7 +504,7 @@ export default function Landing({ onEnterMode }: LandingProps) {
       {/* ═══════════════════════════════════════════
           BOTTOM CTA — Dark
          ═══════════════════════════════════════════ */}
-      <section className="bg-gradient-to-b from-[#071A2E] to-[#0F3854] py-20">
+      <section className="bg-gradient-to-b from-[#061424] to-[#0B253C] py-20">
         <div className="max-w-3xl mx-auto px-4 text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -522,7 +522,7 @@ export default function Landing({ onEnterMode }: LandingProps) {
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <motion.button
-                className="flex items-center gap-2 rounded-xl bg-[#00D2FF] px-8 py-3.5 text-sm font-bold text-[#071A2E] shadow-2xl shadow-[#00D2FF]/25"
+                className="flex items-center gap-2 rounded-xl bg-[#00D2FF] px-8 py-3.5 text-sm font-bold text-[#061424] shadow-2xl shadow-[#00D2FF]/25"
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.97 }}
                 onClick={() => onEnterMode("fishermen")}
@@ -550,7 +550,7 @@ export default function Landing({ onEnterMode }: LandingProps) {
       <footer className="bg-white border-t border-gray-200 py-8">
         <div className="max-w-5xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <Waves className="size-4 text-[#0F3854]" />
+            <Waves className="size-4 text-[#0B253C]" />
             <span className="text-sm font-bold text-[#0F172A]">SeaSathi</span>
             <span className="text-xs text-gray-400">— Marine Safety Intelligence</span>
           </div>

@@ -126,7 +126,7 @@ function MapLayers({
           <Polyline
             positions={IMBL_POINTS}
             pathOptions={{
-              color: "#FF0054",
+              color: "#EF4444",
               weight: 2.5,
               dashArray: "8, 6",
               opacity: 0.8,
@@ -135,9 +135,9 @@ function MapLayers({
           <Polygon
             positions={EEZ_POINTS}
             pathOptions={{
-              fillColor: "#FF0054",
+              fillColor: "#EF4444",
               fillOpacity: 0.04,
-              color: "#FF0054",
+              color: "#EF4444",
               weight: 1,
               dashArray: "4, 4",
               opacity: 0.3,
@@ -311,12 +311,12 @@ export default function CommandCenter() {
   return (
     <div className="flex h-[calc(100vh-4rem)]">
       {/* ═══ LEFT SIDEBAR: AI Chat ═══ */}
-      <div className="w-[340px] flex-shrink-0 border-r border-white/[0.06] bg-[#0A1128] flex flex-col">
+      <div className="w-[340px] flex-shrink-0 border-r border-slate-700/30 bg-[#061424] flex flex-col">
         {/* Header */}
         <div className="p-3 border-b border-white/[0.06]">
           <div className="flex items-center gap-2">
-            <div className="flex items-center justify-center rounded-lg bg-[#FEE440]/10 p-1.5">
-              <Brain className="size-4 text-[#FEE440]" />
+            <div className="flex items-center justify-center rounded-lg bg-[#FACC15]/10 p-1.5">
+              <Brain className="size-4 text-[#FACC15]" />
             </div>
             <div>
               <h2 className="text-sm font-bold text-white">AI Intelligence</h2>
@@ -329,7 +329,7 @@ export default function CommandCenter() {
             className="mt-2 flex w-full items-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.02] px-3 py-2 text-xs text-white/50 hover:bg-white/[0.04] transition-colors"
             onClick={() => setChainOpen(!chainOpen)}
           >
-            <Zap className="size-3 text-[#FEE440]" />
+            <Zap className="size-3 text-[#FACC15]" />
             <span className="font-medium">AI Execution Chain</span>
             <span className="ml-auto text-[10px] text-white/30">
               {toolChain.filter((t) => t.status === "complete").length}/{toolChain.length}
@@ -361,7 +361,7 @@ export default function CommandCenter() {
                       {tc.status === "complete" ? (
                         <CheckCircle2 className="size-3 text-emerald-400" />
                       ) : tc.status === "running" ? (
-                        <Loader2 className="size-3 text-[#FEE440] animate-spin" />
+                        <Loader2 className="size-3 text-[#FACC15] animate-spin" />
                       ) : (
                         <div className="size-3 rounded-full border border-white/20" />
                       )}
@@ -392,15 +392,15 @@ export default function CommandCenter() {
               >
                 {msg.role === "assistant" && (
                   <div className="flex-shrink-0 mt-1">
-                    <div className="flex items-center justify-center rounded-lg bg-[#FEE440]/10 p-1.5">
-                      <Bot className="size-3.5 text-[#FEE440]" />
+                    <div className="flex items-center justify-center rounded-lg bg-[#FACC15]/10 p-1.5">
+                      <Bot className="size-3.5 text-[#FACC15]" />
                     </div>
                   </div>
                 )}
                 <div
                   className={`max-w-[85%] rounded-xl px-3 py-2.5 ${
                     msg.role === "user"
-                      ? "bg-[#FEE440] text-[#0A1128] rounded-tr-sm"
+                      ? "bg-[#FACC15] text-[#061424] rounded-tr-sm"
                       : "bg-white/[0.04] text-white/80 rounded-tl-sm border border-white/[0.06]"
                   }`}
                 >
@@ -409,11 +409,11 @@ export default function CommandCenter() {
                     <div className="mt-2 flex items-center gap-2">
                       <div className="h-1 flex-1 rounded-full bg-white/10 overflow-hidden">
                         <div
-                          className="h-full rounded-full bg-[#FEE440]"
+                          className="h-full rounded-full bg-[#FACC15]"
                           style={{ width: `${msg.confidence}%` }}
                         />
                       </div>
-                      <span className="text-[9px] text-[#FEE440]/70 font-medium">
+                      <span className="text-[9px] text-[#FACC15]/70 font-medium">
                         {msg.confidence}%
                       </span>
                     </div>
@@ -426,7 +426,7 @@ export default function CommandCenter() {
                           className="rounded-lg bg-white/[0.03] border border-white/[0.04] p-2"
                         >
                           <div className="flex items-center justify-between">
-                            <span className="text-[9px] font-bold text-[#FEE440]/70 uppercase tracking-wider">
+                            <span className="text-[9px] font-bold text-[#FACC15]/70 uppercase tracking-wider">
                               {ev.source}
                             </span>
                             <span className="text-[9px] text-white/30">{ev.confidence}%</span>
@@ -446,13 +446,13 @@ export default function CommandCenter() {
             {isThinking && (
               <div className="flex gap-2">
                 <div className="flex-shrink-0 mt-1">
-                  <div className="flex items-center justify-center rounded-lg bg-[#FEE440]/10 p-1.5">
-                    <Bot className="size-3.5 text-[#FEE440]" />
+                  <div className="flex items-center justify-center rounded-lg bg-[#FACC15]/10 p-1.5">
+                    <Bot className="size-3.5 text-[#FACC15]" />
                   </div>
                 </div>
                 <div className="rounded-xl bg-white/[0.04] border border-white/[0.06] px-4 py-3 rounded-tl-sm">
                   <div className="flex items-center gap-2">
-                    <Loader2 className="size-3 text-[#FEE440] animate-spin" />
+                    <Loader2 className="size-3 text-[#FACC15] animate-spin" />
                     <span className="text-xs text-white/50">Analyzing data sources...</span>
                   </div>
                 </div>
@@ -475,7 +475,7 @@ export default function CommandCenter() {
             />
             <Button
               size="icon-sm"
-              className="bg-[#FEE440] hover:bg-[#FEE440]/80 text-[#0A1128] rounded-lg"
+              className="bg-[#FACC15] hover:bg-[#FACC15]/80 text-[#061424] rounded-lg"
               onClick={handleSend}
               disabled={!input.trim() || isThinking}
             >
@@ -505,9 +505,9 @@ export default function CommandCenter() {
         </MapContainer>
 
         {/* Layer Control Panel */}
-        <div className="absolute top-3 right-3 z-[1000] w-56 rounded-xl border border-white/[0.08] bg-[#0A1128]/95 backdrop-blur-xl p-3 shadow-2xl">
+        <div className="absolute top-3 right-3 z-[1000] w-56 rounded-xl border border-slate-600/40 bg-slate-900/80 backdrop-blur-md p-3 shadow-2xl">
           <div className="flex items-center gap-2 mb-3">
-            <Layers className="size-3.5 text-[#FEE440]" />
+            <Layers className="size-3.5 text-[#FACC15]" />
             <span className="text-xs font-bold text-white">Layer Controls</span>
           </div>
           <div className="space-y-1.5">
@@ -525,12 +525,12 @@ export default function CommandCenter() {
                 <div
                   className={`flex items-center justify-center size-4 rounded border transition-colors ${
                     activeLayers.includes(layer.id)
-                      ? "bg-[#FEE440] border-[#FEE440]"
+                      ? "bg-[#FACC15] border-[#FACC15]"
                       : "border-white/20 bg-transparent"
                   }`}
                 >
                   {activeLayers.includes(layer.id) && (
-                    <CheckCircle2 className="size-3 text-[#0A1128]" />
+                    <CheckCircle2 className="size-3 text-[#061424]" />
                   )}
                 </div>
                 <span className="text-[11px] text-white/60 peer-checked:text-white/90">
@@ -549,12 +549,12 @@ export default function CommandCenter() {
       </div>
 
       {/* ═══ RIGHT SIDEBAR: Analytics ═══ */}
-      <div className="w-[300px] flex-shrink-0 border-l border-white/[0.06] bg-[#0A1128] flex flex-col overflow-hidden">
+      <div className="w-[300px] flex-shrink-0 border-l border-slate-700/30 bg-[#061424] flex flex-col overflow-hidden">
         <ScrollArea className="flex-1">
           {/* Weather Alerts */}
           <div className="p-3 border-b border-white/[0.06]">
             <div className="flex items-center gap-2 mb-3">
-              <AlertTriangle className="size-3.5 text-[#FF0054]" />
+              <AlertTriangle className="size-3.5 text-[#EF4444]" />
               <span className="text-xs font-bold text-white">IMD Weather Alerts</span>
             </div>
             <div className="space-y-2">
@@ -563,9 +563,9 @@ export default function CommandCenter() {
                   key={alert.id}
                   className={`rounded-lg border p-2.5 ${
                     alert.severity === "warning"
-                      ? "border-[#FF0054]/30 bg-[#FF0054]/5"
+                      ? "border-[#EF4444]/30 bg-[#EF4444]/5"
                       : alert.severity === "watch"
-                        ? "border-[#FEE440]/30 bg-[#FEE440]/5"
+                        ? "border-[#FACC15]/30 bg-[#FACC15]/5"
                         : "border-blue-400/30 bg-blue-400/5"
                   }`}
                 >
@@ -573,9 +573,9 @@ export default function CommandCenter() {
                     <div
                       className={`size-1.5 rounded-full ${
                         alert.severity === "warning"
-                          ? "bg-[#FF0054]"
+                          ? "bg-[#EF4444]"
                           : alert.severity === "watch"
-                            ? "bg-[#FEE440]"
+                            ? "bg-[#FACC15]"
                             : "bg-blue-400"
                       }`}
                     />
@@ -613,9 +613,9 @@ export default function CommandCenter() {
                         {trend >= 0 ? (
                           <TrendingUp className="size-3 text-emerald-400" />
                         ) : (
-                          <TrendingUp className="size-3 text-[#FF0054] rotate-180" />
+                          <TrendingUp className="size-3 text-[#EF4444] rotate-180" />
                         )}
-                        <span className={`text-[10px] font-medium ${trend >= 0 ? "text-emerald-400" : "text-[#FF0054]"}`}>
+                        <span className={`text-[10px] font-medium ${trend >= 0 ? "text-emerald-400" : "text-[#EF4444]"}`}>
                           {trend >= 0 ? "+" : ""}{trend}%
                         </span>
                       </div>
@@ -628,7 +628,7 @@ export default function CommandCenter() {
                             className="w-full rounded-sm"
                             style={{
                               height: `${(d.yield / 100) * 32}px`,
-                              backgroundColor: d.month === "Aug" ? "#FEE440" : "rgba(255,255,255,0.15)",
+                              backgroundColor: d.month === "Aug" ? "#FACC15" : "rgba(255,255,255,0.15)",
                             }}
                           />
                           <span className="text-[8px] text-white/30">{d.month}</span>
@@ -648,16 +648,16 @@ export default function CommandCenter() {
           {/* Emergency Broadcast */}
           <div className="p-3">
             <div className="flex items-center gap-2 mb-3">
-              <Radio className="size-3.5 text-[#FF0054]" />
+              <Radio className="size-3.5 text-[#EF4444]" />
               <span className="text-xs font-bold text-white">Vernacular Broadcast</span>
             </div>
-            <div className="rounded-xl border border-[#FF0054]/20 bg-[#FF0054]/5 p-4">
+            <div className="rounded-xl border border-[#EF4444]/20 bg-[#EF4444]/5 p-4">
               <p className="text-[11px] text-white/60 mb-3 leading-relaxed">
                 Send urgent safety alerts to all fishing vessels in range, translated into local vernacular languages automatically.
               </p>
               <Button
                 size="sm"
-                className="w-full bg-[#FF0054] hover:bg-[#FF0054]/80 text-white font-bold text-xs gap-2"
+                className="w-full bg-[#EF4444] hover:bg-[#EF4444]/80 text-white font-bold text-xs gap-2"
               >
                 <Radio className="size-3.5" />
                 Broadcast Safety Alert

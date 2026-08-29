@@ -244,15 +244,15 @@ export function getSafetyLabel(status: SafetyStatus): string {
 export function getSafetyColor(status: SafetyStatus): string {
   switch (status) {
     case "safe": return "#22c55e";
-    case "caution": return "#FEE440";
-    case "danger": return "#FF0054";
+    case "caution": return "#FACC15";
+    case "danger": return "#EF4444";
   }
 }
 
 export function getZoneColor(productivity: FishingZone["productivity"]): string {
   switch (productivity) {
     case "high": return "#22c55e";
-    case "medium": return "#FEE440";
+    case "medium": return "#FACC15";
     case "low": return "#FF8C42";
   }
 }

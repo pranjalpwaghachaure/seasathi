@@ -225,15 +225,15 @@ export default function FishermenMode() {
       <AnimatePresence>
         {(voiceQuery || aiResponse) && (
           <motion.div
-            className="mx-3 mt-2 rounded-lg border border-[#FEE440]/20 bg-[#FEE440]/5 p-3 flex-shrink-0"
+            className="mx-3 mt-2 rounded-lg border border-[#FACC15]/20 bg-[#FACC15]/5 p-3 flex-shrink-0"
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
           >
             {voiceQuery && (
               <div className="flex items-start gap-2 mb-2">
-                <Mic className="size-3.5 text-[#FEE440] mt-0.5 shrink-0" />
-                <p className="text-xs text-[#FEE440]">{voiceQuery}</p>
+                <Mic className="size-3.5 text-[#FACC15] mt-0.5 shrink-0" />
+                <p className="text-xs text-[#FACC15]">{voiceQuery}</p>
               </div>
             )}
             {aiResponse && (
@@ -289,7 +289,7 @@ export default function FishermenMode() {
           <Polyline
             positions={IMBL_POINTS}
             pathOptions={{
-              color: "#FF0054",
+              color: "#EF4444",
               weight: 2.5,
               dashArray: "8, 6",
               opacity: 0.8,
@@ -320,7 +320,7 @@ export default function FishermenMode() {
           <Button
             size="sm"
             variant="destructive"
-            className="text-[10px] gap-1 bg-[#FF0054]/80 hover:bg-[#FF0054] border border-[#FF0054]/50"
+            className="text-[10px] gap-1 bg-[#EF4444]/80 hover:bg-[#EF4444] border border-[#EF4444]/50"
             onClick={handleSimulateBorder}
             disabled={simulating}
           >
@@ -337,7 +337,7 @@ export default function FishermenMode() {
           {QUICK_QUERIES.map((q) => (
             <button
               key={q}
-              className="shrink-0 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] text-white/60 hover:text-[#FEE440] hover:border-[#FEE440]/30 hover:bg-[#FEE440]/5 transition-colors"
+              className="shrink-0 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[11px] text-white/60 hover:text-[#FACC15] hover:border-[#FACC15]/30 hover:bg-[#FACC15]/5 transition-colors"
               onClick={() => handleQuickQuery(q)}
             >
               {q}
@@ -350,10 +350,10 @@ export default function FishermenMode() {
           <motion.button
             className={`relative flex items-center justify-center rounded-full ${
               isSpeaking
-                ? "bg-[#FF0054] mic-active"
-                : "bg-[#FEE440] mic-active"
+                ? "bg-[#EF4444] mic-active"
+                : "bg-[#FACC15] mic-active"
             } w-16 h-16 shadow-2xl ${
-              isSpeaking ? "shadow-[#FF0054]/30" : "shadow-[#FEE440]/30"
+              isSpeaking ? "shadow-[#EF4444]/30" : "shadow-[#FACC15]/30"
             }`}
             whileTap={{ scale: 0.9 }}
             onClick={handleMicPress}
@@ -362,7 +362,7 @@ export default function FishermenMode() {
             {isSpeaking ? (
               <Volume2 className="size-7 text-white" />
             ) : (
-              <Mic className="size-7 text-[#0A1128]" />
+              <Mic className="size-7 text-[#061424]" />
             )}
 
             {/* Waveform bars */}
@@ -371,7 +371,7 @@ export default function FishermenMode() {
                 {[...Array(7)].map((_, i) => (
                   <div
                     key={i}
-                    className="w-0.5 bg-[#FF0054] rounded-full waveform-bar"
+                    className="w-0.5 bg-[#EF4444] rounded-full waveform-bar"
                     style={{
                       height: 4,
                       animationDelay: `${i * 0.08}s`,
@@ -397,17 +397,17 @@ export default function FishermenMode() {
             exit={{ opacity: 0 }}
           >
             <motion.div
-              className="mx-4 max-w-md w-full rounded-2xl border-2 border-[#FF0054] bg-[#0A1128] p-6 shadow-2xl shadow-[#FF0054]/30"
+              className="mx-4 max-w-md w-full rounded-2xl border-2 border-[#EF4444] bg-[#061424] p-6 shadow-2xl shadow-[#EF4444]/30 backdrop-blur-md"
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.8, opacity: 0 }}
             >
               <div className="flex items-center gap-3 mb-4">
-                <div className="flex items-center justify-center rounded-xl bg-[#FF0054]/15 p-3">
-                  <AlertTriangle className="size-8 text-[#FF0054]" />
+                <div className="flex items-center justify-center rounded-xl bg-[#EF4444]/15 p-3">
+                  <AlertTriangle className="size-8 text-[#EF4444]" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-black text-[#FF0054]">
+                  <h3 className="text-lg font-black text-[#EF4444]">
                     ⚠️ WARNING
                   </h3>
                   <p className="text-sm text-white/70">
@@ -416,9 +416,9 @@ export default function FishermenMode() {
                 </div>
               </div>
 
-              <div className="rounded-lg border border-[#FF0054]/20 bg-[#FF0054]/5 p-4 mb-4">
+              <div className="rounded-lg border border-[#EF4444]/20 bg-[#EF4444]/5 p-4 mb-4">
                 <p className="text-sm text-white/80 leading-relaxed">
-                  Your vessel is within <strong className="text-[#FF0054]">2 nautical miles</strong> of
+                  Your vessel is within <strong className="text-[#EF4444]">2 nautical miles</strong> of
                   the International Maritime Boundary Line (IMBL). Continued movement
                   in this direction may result in entering foreign waters.
                 </p>
@@ -431,7 +431,7 @@ export default function FishermenMode() {
 
               <div className="flex gap-2">
                 <Button
-                  className="flex-1 bg-[#FF0054] hover:bg-[#FF0054]/80 text-white font-bold"
+                  className="flex-1 bg-[#EF4444] hover:bg-[#EF4444]/80 text-white font-bold"
                   onClick={handleDismissAlert}
                 >
                   <Navigation className="size-4" />
