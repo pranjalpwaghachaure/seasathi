@@ -35,7 +35,7 @@ export default function SeaSathiApp() {
       {/* Main content area - offset for fixed header */}
       <main className="pt-16">
         {mode === "landing" && <Landing onEnterMode={handleEnterMode} />}
-        {mode === "fishermen" && <FishermenMode />}
+        {mode === "fishermen" && <FishermenMode language={language} />}
         {mode === "command" && <CommandCenter />}
       </main>
 

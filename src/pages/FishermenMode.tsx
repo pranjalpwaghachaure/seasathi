@@ -97,8 +97,10 @@ function MapInvalidator({ center }: { center: [number, number] }) {
   return null;
 }
 
+import FishermenChatbot from "@/components/seasathi/FishermenChatbot";
+
 /* ── Main Fishermen Mode Component ─────────── */
-export default function FishermenMode() {
+export default function FishermenMode({ language = "en" }: { language?: string }) {
   const [weather] = useState(DEFAULT_WEATHER);
   const [boat, setBoat] = useState<UserBoat>(USER_BOAT);
   const [isSpeaking, setIsSpeaking] = useState(false);
@@ -453,6 +455,9 @@ export default function FishermenMode() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* AI Chatbot Widget */}
+      <FishermenChatbot language={language} />
     </div>
   );
 }
