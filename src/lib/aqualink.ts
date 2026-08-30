@@ -13,14 +13,6 @@ export interface AqualinkSite {
   [key: string]: unknown;
 }
 
-// Indian Ocean / Arabian Sea / Bay of Bengal bounding box
-const INDIA_BBOX = {
-  latMin: -10,
-  latMax: 30,
-  lngMin: 50,
-  lngMax: 100,
-};
-
 const API_URL = "https://ocean-systems.uc.r.appspot.com/api/sites";
 
 /**
@@ -39,15 +31,18 @@ export async function fetchAqualinkSites(): Promise<AqualinkSite[]> {
 }
 
 /**
- * Filter sites within the Indian Ocean bounding box.
+ * Filter sites within a geographic bounding box.
  */
-export function filterIndiaSites(sites: AqualinkSite[]): AqualinkSite[] {
+export function filterSitesInBbox(
+  sites: AqualinkSite[],
+  bbox: { latMin: number; latMax: number; lngMin: number; lngMax: number },
+): AqualinkSite[] {
   return sites.filter(
     (s) =>
-      s.latitude >= INDIA_BBOX.latMin &&
-      s.latitude <= INDIA_BBOX.latMax &&
-      s.longitude >= INDIA_BBOX.lngMin &&
-      s.longitude <= INDIA_BBOX.lngMax,
+      s.latitude >= bbox.latMin &&
+      s.latitude <= bbox.latMax &&
+      s.longitude >= bbox.lngMin &&
+      s.longitude <= bbox.lngMax,
   );
 }
 

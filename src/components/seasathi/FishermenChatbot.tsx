@@ -18,7 +18,7 @@ import {
   DEFAULT_WEATHER,
   getZoneColor,
 } from "@/lib/mockData";
-import { fetchAqualinkSites, filterIndiaSites, getSstColor, hasAlert, findNearestSite } from "@/lib/aqualink";
+import { fetchAqualinkSites, getSstColor, hasAlert, findNearestSite } from "@/lib/aqualink";
 import type { AqualinkSite } from "@/lib/aqualink";
 
 /* ── Types ─────────────────────────────────── */
@@ -163,7 +163,7 @@ export default function FishermenChatbot({ language }: FishermenChatbotProps) {
 
   useEffect(() => {
     fetchAqualinkSites().then((sites) => {
-      setAqualinkSites(filterIndiaSites(sites));
+      setAqualinkSites(sites);
     });
   }, []);
 

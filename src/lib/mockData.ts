@@ -100,10 +100,84 @@ export const LAYER_OPTIONS = [
   { id: "aqualink", label: "Aqualink Live Ocean Buoys", checked: true },
 ] as const;
 
+// ── Basemap Tile Options ──────────────────────
+
+export type BasemapId = "dark" | "satellite" | "nautical";
+
+export const BASEMAP_TILES: Record<BasemapId, { label: string; url: string; emoji: string }> = {
+  dark: {
+    label: "Dark Matter Global",
+    emoji: "🌌",
+    url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+  },
+  satellite: {
+    label: "Global Satellite View",
+    emoji: "🛰️",
+    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+  },
+  nautical: {
+    label: "INCOIS Nautical Style",
+    emoji: "🌊",
+    url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
+  },
+};
+
+// ── Region Preset Definitions ──────────────────
+
+export interface RegionPreset {
+  id: string;
+  label: string;
+  emoji: string;
+  center: [number, number];
+  zoom: number;
+}
+
+export const REGION_PRESETS: RegionPreset[] = [
+  { id: "india", label: "Indian Ocean & Bay of Bengal", emoji: "🇮🇳", center: [16.5, 82.5], zoom: 5 },
+  { id: "global", label: "Global View", emoji: "🌍", center: [20.0, 0.0], zoom: 3 },
+  { id: "pacific", label: "Pacific Ocean", emoji: "🌊", center: [0.0, 160.0], zoom: 3 },
+  { id: "atlantic", label: "Atlantic & Mediterranean", emoji: "🇪🇺", center: [30.0, -10.0], zoom: 3 },
+];
+
+// ── Global Maritime EEZ Boundaries ─────────────
+
+export const GLOBAL_EEZ_POLYLINES: [number, number][][] = [
+  // Indian EEZ (simplified)
+  [[20.0, 70.0], [22.0, 68.0], [24.0, 66.0], [25.5, 63.0], [25.0, 60.0], [20.0, 58.0], [8.0, 60.0], [6.0, 62.0], [8.0, 72.0], [10.0, 73.0], [15.0, 74.0], [17.0, 73.0], [20.0, 70.0]],
+  // Sri Lanka EEZ
+  [[10.0, 82.0], [8.0, 80.5], [6.0, 80.0], [5.5, 81.0], [6.0, 82.5], [7.5, 82.5], [10.0, 82.0]],
+  // Maldives EEZ
+  [[7.0, 72.0], [4.0, 73.0], [0.5, 73.5], [-1.0, 73.0], [0.0, 72.0], [4.0, 71.5], [7.0, 72.0]],
+  // Thailand EEZ
+  [[12.0, 100.0], [9.0, 99.0], [7.0, 98.5], [6.5, 99.5], [8.0, 101.0], [10.0, 102.0], [12.0, 100.0]],
+  // Oman EEZ
+  [[24.0, 58.0], [22.0, 57.5], [18.0, 56.5], [16.5, 54.0], [17.0, 53.0], [20.0, 55.0], [24.0, 58.0]],
+  // Seychelles EEZ
+  [[-3.0, 50.0], [-5.0, 49.0], [-8.0, 48.5], [-10.0, 50.0], [-8.0, 53.0], [-5.0, 54.0], [-2.0, 52.0], [-3.0, 50.0]],
+];
+
+// ── Global Wind Vector Grid (expanded worldwide) ─
+
+export const GLOBAL_WIND_POSITIONS: [number, number][] = [
+  // Indian Ocean
+  [17.0, 83.2], [16.7, 83.5], [16.4, 82.8], [16.1, 83.8], [15.8, 84.0],
+  [10.0, 75.0], [5.0, 70.0], [0.0, 65.0], [-5.0, 60.0], [-10.0, 80.0],
+  // Atlantic
+  [30.0, -20.0], [20.0, -30.0], [10.0, -25.0], [0.0, -15.0], [-10.0, -10.0], [40.0, -40.0], [50.0, -30.0], [55.0, -15.0],
+  // Pacific
+  [0.0, 140.0], [5.0, 150.0], [10.0, 160.0], [15.0, 170.0], [-5.0, 155.0], [-10.0, 140.0], [20.0, 130.0], [25.0, 120.0],
+  // Mediterranean
+  [35.0, 15.0], [38.0, 10.0], [40.0, 5.0], [42.0, 3.0], [37.0, 20.0], [33.0, 25.0],
+  // Arabian Sea
+  [15.0, 60.0], [18.0, 65.0], [20.0, 63.0], [22.0, 60.0], [12.0, 55.0],
+  // South China Sea
+  [10.0, 110.0], [15.0, 115.0], [8.0, 112.0], [5.0, 108.0],
+];
+
 // ── Coordinates (Visakhapatnam coast) ──────────
 
-export const MAP_CENTER: [number, number] = [16.5, 82.5];
-export const MAP_ZOOM = 9;
+export const MAP_CENTER: [number, number] = [20.0, 0.0];
+export const MAP_ZOOM = 3;
 
 export const USER_BOAT: UserBoat = {
   lat: 16.82,

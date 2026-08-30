@@ -46,13 +46,14 @@ import {
   VOICE_QUERIES,
   AI_VOICE_RESPONSE,
   BORDER_CROSSING_TARGET,
+  REGION_PRESETS,
   getSafetyStatus,
   getSafetyLabel,
   getSafetyColor,
   getZoneColor,
   type UserBoat,
 } from "@/lib/mockData";
-import { fetchAqualinkSites, filterIndiaSites, getSstColor, hasAlert } from "@/lib/aqualink";
+import { fetchAqualinkSites, getSstColor, hasAlert } from "@/lib/aqualink";
 import type { AqualinkSite } from "@/lib/aqualink";
 
 /* ── Types ──────────────────────────────────── */
@@ -111,6 +112,14 @@ function MapInvalidator({ center }: { center: [number, number] }) {
   return null;
 }
 
+function FlyToPreset({ center, zoom }: { center: [number, number]; zoom: number }) {
+  const map = useMap();
+  useEffect(() => {
+    map.flyTo(center, zoom, { duration: 1.5 });
+  }, [center, zoom, map]);
+  return null;
+}
+
 import FishermenChatbot from "@/components/seasathi/FishermenChatbot";
 import IMBLAlertBanner from "@/components/seasathi/IMBLAlertBanner";
 
@@ -131,11 +140,12 @@ export default function FishermenMode({ language = "en" }: { language?: string }
   const [voiceInputResponse, setVoiceInputResponse] = useState("");
   const [batteryLevel] = useState(84);
   const [aqualinkSites, setAqualinkSites] = useState<AqualinkSite[]>([]);
+  const [flyTarget, setFlyTarget] = useState<{ center: [number, number]; zoom: number } | null>(null);
 
-  // Fetch Aqualink buoy data on mount
+  // Fetch Aqualink buoy data on mount (all global sites)
   useEffect(() => {
     fetchAqualinkSites().then((sites) => {
-      setAqualinkSites(filterIndiaSites(sites));
+      setAqualinkSites(sites);
     });
   }, []);
   const [sosSent, setSosSent] = useState(false);
@@ -282,12 +292,18 @@ export default function FishermenMode({ language = "en" }: { language?: string }
                 className="w-full h-full"
                 zoomControl={false}
                 attributionControl={false}
+                worldCopyJump={true}
+                minZoom={2}
+                maxZoom={18}
               >
                 <TileLayer
                   url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-                  attribution='&copy; <a href="https://carto.com/">CARTO</a>'
+                  attribution='&copy; OpenStreetMap contributors'
                 />
                 <MapInvalidator center={[boat.lat, boat.lng]} />
+                {flyTarget && (
+                  <FlyToPreset center={flyTarget.center} zoom={flyTarget.zoom} />
+                )}
 
                 {/* Safe Fishing Zones */}
                 {FISHING_ZONES.map((zone) => (
@@ -419,6 +435,19 @@ export default function FishermenMode({ language = "en" }: { language?: string }
                     </div>
                   </div>
                 </motion.div>
+              </div>
+
+              {/* ── Region Quick-Jump Buttons ─── */}
+              <div className="absolute top-16 left-3 right-14 z-[1000] flex flex-wrap gap-1">
+                {REGION_PRESETS.map((preset) => (
+                  <button
+                    key={preset.id}
+                    className="rounded-full border border-slate-600/40 bg-slate-900/80 backdrop-blur-md px-2 py-0.5 text-[9px] text-white/60 hover:text-[#FACC15] hover:border-[#FACC15]/30 transition-colors"
+                    onClick={() => setFlyTarget({ center: preset.center, zoom: preset.zoom })}
+                  >
+                    {preset.emoji} {preset.label}
+                  </button>
+                ))}
               </div>
 
               {/* ── Radar Sweep Overlay ─────────────────── */}

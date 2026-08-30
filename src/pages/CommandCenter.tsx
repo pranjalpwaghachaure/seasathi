@@ -36,7 +36,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import FuelSavingsCard from "@/components/seasathi/FuelSavingsCard";
-import { fetchAqualinkSites, filterIndiaSites, getSstColor, hasAlert } from "@/lib/aqualink";
+import { fetchAqualinkSites, getSstColor, hasAlert } from "@/lib/aqualink";
 import type { AqualinkSite } from "@/lib/aqualink";
 import {
   MAP_CENTER,
@@ -53,9 +53,14 @@ import {
   AI_CHAT_HISTORY,
   AI_TOOL_CHAIN,
   LAYER_OPTIONS,
+  BASEMAP_TILES,
+  REGION_PRESETS,
+  GLOBAL_EEZ_POLYLINES,
+  GLOBAL_WIND_POSITIONS,
   getZoneColor,
   type AIMessage,
   type ToolCall,
+  type BasemapId,
 } from "@/lib/mockData";
 
 /* ── Map Layers Component ──────────────────── */
@@ -127,7 +132,7 @@ function MapLayers({
           </CircleMarker>
         ))}
 
-      {/* IMBL / EEZ */}
+      {/* IMBL / EEZ + Global Maritime Boundaries */}
       {activeLayers.includes("imbl") && (
         <>
           <Polyline
@@ -150,6 +155,19 @@ function MapLayers({
               opacity: 0.3,
             }}
           />
+          {/* Global EEZ Maritime Boundaries */}
+          {GLOBAL_EEZ_POLYLINES.map((line, i) => (
+            <Polyline
+              key={`geez-${i}`}
+              positions={line}
+              pathOptions={{
+                color: "#FACC15",
+                weight: 1,
+                dashArray: "6, 4",
+                opacity: 0.25,
+              }}
+            />
+          ))}
         </>
       )}
 
@@ -200,16 +218,10 @@ function MapLayers({
           );
         })}
 
-      {/* Wind Vectors */}
+      {/* Global Wind Vectors */}
       {activeLayers.includes("wind") && (
         <>
-          {[
-            [17.0, 83.2],
-            [16.7, 83.5],
-            [16.4, 82.8],
-            [16.1, 83.8],
-            [15.8, 84.0],
-          ].map((pos, i) => (
+          {GLOBAL_WIND_POSITIONS.map((pos, i) => (
             <CircleMarker
               key={`wind-${i}`}
               center={[pos[0], pos[1]]}
@@ -276,6 +288,14 @@ function MapInvalidate() {
   return null;
 }
 
+function FlyToPreset({ center, zoom }: { center: [number, number]; zoom: number }) {
+  const map = useMap();
+  useEffect(() => {
+    map.flyTo(center, zoom, { duration: 1.5 });
+  }, [center, zoom, map]);
+  return null;
+}
+
 /* ── Main Command Center ───────────────────── */
 export default function CommandCenter() {
   const [messages, setMessages] = useState<AIMessage[]>(AI_CHAT_HISTORY);
@@ -287,16 +307,18 @@ export default function CommandCenter() {
   );
   const [isThinking, setIsThinking] = useState(false);
   const [aqualinkSites, setAqualinkSites] = useState<AqualinkSite[]>([]);
+  const [basemap, setBasemap] = useState<BasemapId>("dark");
+  const [flyTarget, setFlyTarget] = useState<{ center: [number, number]; zoom: number } | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Fetch Aqualink buoy data on mount
+  // Fetch Aqualink buoy data on mount (all global sites)
   useEffect(() => {
     fetchAqualinkSites().then((sites) => {
-      setAqualinkSites(filterIndiaSites(sites));
+      setAqualinkSites(sites);
     });
   }, []);
 
@@ -573,18 +595,36 @@ export default function CommandCenter() {
           zoom={MAP_ZOOM}
           className="w-full h-full"
           zoomControl={true}
+          worldCopyJump={true}
+          minZoom={2}
+          maxZoom={18}
         >
           <TileLayer
-            url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
-            attribution='&copy; <a href="https://carto.com/">CARTO</a>'
+            key={basemap}
+            url={BASEMAP_TILES[basemap].url}
+            attribution='&copy; OpenStreetMap contributors'
           />
           <MapInvalidate />
+          {flyTarget && <FlyToPreset center={flyTarget.center} zoom={flyTarget.zoom} />}
           <MapLayers
             activeLayers={activeLayers}
             boatPos={[USER_BOAT.lat, USER_BOAT.lng]}
             aqualinkSites={aqualinkSites}
           />
         </MapContainer>
+
+        {/* ── Region Quick-Jump Buttons ─── */}
+        <div className="absolute top-3 left-3 z-[1000] flex flex-wrap gap-1.5">
+          {REGION_PRESETS.map((preset) => (
+            <button
+              key={preset.id}
+              className="rounded-full border border-slate-600/40 bg-slate-900/80 backdrop-blur-md px-2.5 py-1 text-[10px] text-white/70 hover:text-[#FACC15] hover:border-[#FACC15]/30 transition-colors shadow-lg"
+              onClick={() => setFlyTarget({ center: preset.center, zoom: preset.zoom })}
+            >
+              {preset.emoji} {preset.label}
+            </button>
+          ))}
+        </div>
 
         {/* Layer Control Panel */}
         <div className="absolute top-3 right-3 z-[1000] w-56 rounded-xl border border-slate-600/40 bg-slate-900/80 backdrop-blur-md p-3 shadow-2xl">
@@ -620,6 +660,28 @@ export default function CommandCenter() {
                 </span>
               </label>
             ))}
+          </div>
+          {/* Basemap Selector */}
+          <div className="mt-3 pt-2 border-t border-white/[0.06]">
+            <div className="flex items-center gap-1.5 text-[10px] text-white/40 mb-2 font-medium">
+              <span>Basemap</span>
+            </div>
+            <div className="space-y-1">
+              {(Object.entries(BASEMAP_TILES) as [BasemapId, typeof BASEMAP_TILES[BasemapId]][]).map(([id, tile]) => (
+                <button
+                  key={id}
+                  className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[11px] transition-colors ${
+                    basemap === id
+                      ? "bg-[#FACC15]/10 text-[#FACC15] border border-[#FACC15]/30"
+                      : "text-white/50 hover:bg-white/[0.03] border border-transparent"
+                  }`}
+                  onClick={() => setBasemap(id)}
+                >
+                  <span>{tile.emoji}</span>
+                  <span>{tile.label}</span>
+                </button>
+              ))}
+            </div>
           </div>
           <div className="mt-3 pt-2 border-t border-white/[0.06]">
             <div className="flex items-center gap-1.5 text-[10px] text-white/30">
