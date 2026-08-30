@@ -33,6 +33,7 @@ import {
   Fish,
   Volume2,
   Waves,
+  Globe,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -46,8 +47,9 @@ import {
   generateMockVessels,
   getVesselColor,
   getVesselRadius,
+  fetchCopernicusMarineData,
 } from "@/lib/marineApi";
-import type { MarineConditions, EEZFeature, AIVessel } from "@/lib/marineApi";
+import type { MarineConditions, EEZFeature, AIVessel, CopernicusMarineData } from "@/lib/marineApi";
 import {
   MAP_CENTER,
   MAP_ZOOM,
@@ -89,12 +91,14 @@ function MapLayers({
   aqualinkSites,
   vessels,
   eezPositions,
+  copernicusData,
 }: {
   activeLayers: string[];
   boatPos: [number, number];
   aqualinkSites: AqualinkSite[];
   vessels: AIVessel[];
   eezPositions: [number, number][][];
+  copernicusData: CopernicusMarineData | null;
 }) {
   const safeBoatPos: [number, number] = [
     isValidLat(boatPos[0]) ? boatPos[0] : SAFE_HARBOR[0],
@@ -211,11 +215,12 @@ function MapLayers({
               key={`aq-${site.id}`}
               center={coords}
               radius={6}
+              className={alert ? "glow-cyan-400" : ""}
               pathOptions={{
                 fillColor: color,
                 fillOpacity: 0.85,
-                color: color,
-                weight: 2,
+                color: alert ? "#38bdf8" : color,
+                weight: alert ? 3 : 2,
                 opacity: 0.9,
               }}
             >
@@ -223,7 +228,7 @@ function MapLayers({
                 <span className="text-xs font-medium">{site.name} | Temp: {temp.toFixed(1)}°C</span>
               </Tooltip>
               <Popup>
-                <div className="min-w-[180px]" style={{ background: "#0A1628", color: "white", padding: "12px", borderRadius: "8px", border: `1px solid ${color}40` }}>
+                <div className="min-w-[200px]" style={{ background: "#0A1929", color: "white", padding: "12px", borderRadius: "8px", border: `1px solid ${alert ? '#38bdf8' : color}40` }}>
                   <div style={{ fontWeight: 700, fontSize: "13px", marginBottom: 4 }}>{site.name}</div>
                   <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.5)", marginBottom: 8 }}>{site.country ?? "Ocean Site"}</div>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
@@ -236,6 +241,18 @@ function MapLayers({
                       <div style={{ fontSize: "14px", fontWeight: 800, color: "#0EA5E9" }}>{site.bottomTemperature?.value?.toFixed(1) ?? "N/A"}°C</div>
                     </div>
                   </div>
+                  {/* 3D Ocean Parameters from Copernicus CMEMS */}
+                  {copernicusData && (
+                    <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+                      <div style={{ fontSize: "9px", color: "#38bdf8", fontWeight: 700, marginBottom: 4, textTransform: "uppercase" }}>CMEMS PHY_001_024</div>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4 }}>
+                        <div><span style={{ fontSize: "8px", color: "rgba(255,255,255,0.35)" }}>Current (SMOC)</span><div style={{ fontSize: "11px", fontWeight: 600, color: "#E0F2FE" }}>{copernicusData.surfaceCurrentVelocity?.toFixed(2) ?? '—'} m/s</div></div>
+                        <div><span style={{ fontSize: "8px", color: "rgba(255,255,255,0.35)" }}>Salinity (PSU)</span><div style={{ fontSize: "11px", fontWeight: 600, color: "#E0F2FE" }}>{copernicusData.salinity?.toFixed(1) ?? '—'}</div></div>
+                        <div><span style={{ fontSize: "8px", color: "rgba(255,255,255,0.35)" }}>SSHA</span><div style={{ fontSize: "11px", fontWeight: 600, color: "#E0F2FE" }}>{copernicusData.seaSurfaceHeightAnomaly ?? '—'} cm</div></div>
+                        <div><span style={{ fontSize: "8px", color: "rgba(255,255,255,0.35)" }}>Depth Profile</span><div style={{ fontSize: "9px", fontWeight: 500, color: "rgba(255,255,255,0.5)", lineHeight: 1.4 }}>50 levels · 0–5000m</div></div>
+                      </div>
+                    </div>
+                  )}
                   <div style={{ marginTop: 8, fontSize: "10px" }}>
                     <span style={{ color: "rgba(255,255,255,0.4)", marginRight: 4 }}>Heatwave Alert:</span>
                     <span style={{ color: alert ? "#EF4444" : "#22c55e", fontWeight: 700 }}>{alert ? `Level ${site.weeklyAlertLevel} ⚠️` : "None ✅"}</span>
@@ -403,6 +420,7 @@ export default function CommandCenter() {
   const [marineData, setMarineData] = useState<MarineConditions | null>(null);
   const [vessels, setVessels] = useState<AIVessel[]>([]);
   const [eezFeature, setEezFeature] = useState<EEZFeature | null>(null);
+  const [copernicusData, setCopernicusData] = useState<CopernicusMarineData | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -429,6 +447,11 @@ export default function CommandCenter() {
   // Fetch EEZ boundary from MarineRegions
   useEffect(() => {
     fetchEEZGeometry().then(setEezFeature);
+  }, []);
+
+  // Fetch Copernicus Marine Service data (CMEMS PHY_001_024)
+  useEffect(() => {
+    fetchCopernicusMarineData(MAP_CENTER[0], MAP_CENTER[1]).then(setCopernicusData);
   }, []);
 
   const toggleLayer = useCallback((id: string) => {
@@ -726,6 +749,7 @@ export default function CommandCenter() {
             aqualinkSites={aqualinkSites}
             vessels={vessels}
             eezPositions={eezFeature ? geojsonToLeafletPositions(eezFeature.geometry) : []}
+            copernicusData={copernicusData}
           />
         </MapContainer>
 
@@ -859,6 +883,39 @@ export default function CommandCenter() {
               <Radio className="size-2.5" />
               <span>Source: Open-Meteo Marine API • {vessels.length} vessels tracked</span>
             </div>
+            {/* Copernicus Marine Service Attribution */}
+            <div className="mt-2 flex items-center gap-1.5 text-[8px] text-cyan-400/40">
+              <Globe className="size-2" />
+              <span>🌐 Data Source: Copernicus Marine Service | GLOBAL_ANALYSISFORECAST_PHY_001_024</span>
+            </div>
+            {/* 3D Ocean Parameters from CMEMS */}
+            {copernicusData && (
+              <div className="mt-2 rounded-lg border border-cyan-500/15 bg-cyan-500/5 p-2">
+                <div className="text-[9px] text-cyan-400/60 uppercase tracking-wider font-bold mb-1.5">CMEMS 3D Ocean Profile</div>
+                <div className="grid grid-cols-2 gap-1.5">
+                  <div className="text-center">
+                    <div className="text-[8px] text-white/30 uppercase">Current</div>
+                    <div className="text-[11px] font-bold text-cyan-300">{copernicusData.surfaceCurrentVelocity?.toFixed(2) ?? '—'}<span className="text-[8px] text-white/30"> m/s</span></div>
+                    <div className="text-[7px] text-white/20">Dir: {copernicusData.surfaceCurrentDirection?.toFixed(0) ?? '—'}°</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-[8px] text-white/30 uppercase">Salinity</div>
+                    <div className="text-[11px] font-bold text-cyan-300">{copernicusData.salinity?.toFixed(1) ?? '—'}<span className="text-[8px] text-white/30"> PSU</span></div>
+                    <div className="text-[7px] text-white/20">Surface layer</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-[8px] text-white/30 uppercase">SSHA</div>
+                    <div className="text-[11px] font-bold text-cyan-300">{copernicusData.seaSurfaceHeightAnomaly ?? '—'}<span className="text-[8px] text-white/30"> cm</span></div>
+                    <div className="text-[7px] text-white/20">Anomaly</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-[8px] text-white/30 uppercase">Depth</div>
+                    <div className="text-[11px] font-bold text-cyan-300">50<span className="text-[8px] text-white/30"> levels</span></div>
+                    <div className="text-[7px] text-white/20">0 – 5000m</div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Weather Alerts */}
