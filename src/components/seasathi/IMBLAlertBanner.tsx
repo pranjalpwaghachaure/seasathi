@@ -51,13 +51,13 @@ export default function IMBLAlertBanner({ isActive, distanceNM }: IMBLAlertBanne
           initial={{ y: -60, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: -60, opacity: 0 }}
-          className="fixed top-20 left-1/2 -translate-x-1/2 z-[9998] max-w-xl w-[calc(100%-2rem)]"
+          className="fixed top-20 left-1/2 -translate-x-1/2 z-[9998] max-w-xl w-[calc(100%-2rem)] frost-glass"
         >
           <div
-            className={`flex items-center justify-between gap-3 rounded-xl border-2 px-4 py-2.5 shadow-2xl transition-colors hazard-flash-active ${
+            className={`flex items-center justify-between gap-3 rounded-xl px-4 py-2.5 shadow-2xl transition-colors hazard-flash-active ${
               flashOn
-                ? "border-[#EF4444] bg-[#EF4444]/15 shadow-[#EF4444]/30"
-                : "border-[#EF4444]/40 bg-[#EF4444]/8 shadow-[#EF4444]/10"
+                ? "border-[#EF4444] border-2 bg-[#EF4444]/15 shadow-[#EF4444]/30"
+                : "border-[#EF4444]/40 border-2 bg-[#EF4444]/8 shadow-[#EF4444]/10"
             }`}
           >
             <div className="flex items-center gap-2.5">

@@ -129,18 +129,58 @@
   background: #061424 !important;
   font-family: inherit;
 }
+
+/* ── Cold World Map Icy Filter ─────────────── */
+.leaflet-container.icy-map-filter {
+  filter: hue-rotate(185deg) contrast(115%) brightness(85%) saturate(130%);
+}
+
+/* ── Icy Frosted Glass Panels ──────────────── */
+.frost-glass {
+  background: rgba(10, 25, 47, 0.75) !important;
+  border: 1px solid rgba(56, 189, 248, 0.3) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 0 20px rgba(6, 182, 212, 0.15);
+}
+
+/* ── Frost Weather Badge ───────────────────── */
+.frost-badge {
+  background: rgba(10, 25, 47, 0.8);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 0 15px rgba(6, 182, 212, 0.1);
+}
+
+/* ── Cyan Glow Ring for Markers/Buttons ────── */
+@keyframes glow-cyan-ring {
+  0%, 100% { box-shadow: 0 0 6px rgba(34, 211, 238, 0.3); }
+  50% { box-shadow: 0 0 18px rgba(34, 211, 238, 0.6); }
+}
+.glow-cyan-400 {
+  animation: glow-cyan-ring 2.5s ease-in-out infinite;
+}
+
+/* ── Cold Thermal Gradient for vector particles */
+.cold-particle {
+  color: #E0F2FE;
+  opacity: 0.7;
+  filter: drop-shadow(0 0 3px rgba(224, 242, 254, 0.4));
+}
 .leaflet-control-zoom {
-  border: 1px solid rgba(250, 204, 21, 0.3) !important;
+  border: 1px solid rgba(56, 189, 248, 0.25) !important;
   border-radius: 8px !important;
   overflow: hidden;
 }
 .leaflet-control-zoom a {
-  background: rgba(26, 34, 56, 0.95) !important;
-  color: #FACC15 !important;
-  border-color: rgba(250, 204, 21, 0.2) !important;
+  background: rgba(10, 25, 47, 0.9) !important;
+  color: #38bdf8 !important;
+  border-color: rgba(56, 189, 248, 0.15) !important;
+  backdrop-filter: blur(8px);
 }
 .leaflet-control-zoom a:hover {
-  background: rgba(250, 204, 21, 0.15) !important;
+  background: rgba(56, 189, 248, 0.12) !important;
 }
 .leaflet-control-attribution {
   background: rgba(10, 17, 40, 0.8) !important;
@@ -230,12 +270,13 @@ button[data-variant].seasathi-btn:active {
   box-shadow: 0 0 0 3px rgba(0, 210, 255, 0.15);
 }
 
-/* Glassmorphism panel base */
+/* Glassmorphism panel base (frost theme) */
 .seasathi-glass {
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  background: rgba(15, 23, 42, 0.8);
-  border: 1px solid rgba(51, 65, 85, 0.5);
+  background: rgba(10, 25, 47, 0.75);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  box-shadow: 0 0 20px rgba(6, 182, 212, 0.15);
 }
 
 /* Pulse glow for SOS button */
@@ -309,7 +350,7 @@ button[data-variant].seasathi-btn:active {
   background: conic-gradient(
     from 0deg,
     transparent 0deg,
-    rgba(0, 210, 255, 0.12) 30deg,
+    rgba(6, 182, 212, 0.15) 30deg,
     transparent 60deg
   );
   animation: radar-sweep 4s linear infinite;
@@ -320,7 +361,8 @@ button[data-variant].seasathi-btn:active {
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  border: 1px solid rgba(0, 210, 255, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  box-shadow: 0 0 15px rgba(6, 182, 212, 0.1);
 }
 .radar-sweep::after {
   content: '';
@@ -329,8 +371,8 @@ button[data-variant].seasathi-btn:active {
   width: 6px; height: 6px;
   margin: -3px 0 0 -3px;
   border-radius: 50%;
-  background: rgba(0, 210, 255, 0.6);
-  box-shadow: 0 0 8px rgba(0, 210, 255, 0.4);
+  background: rgba(34, 211, 238, 0.7);
+  box-shadow: 0 0 10px rgba(34, 211, 238, 0.5);
 }
 
 /* ── 2. VOICE MIC & WAVEFORM ANIMATIONS ────── */

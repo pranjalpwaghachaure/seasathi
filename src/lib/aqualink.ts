@@ -83,13 +83,17 @@ export function filterSitesInBbox(
 }
 
 /**
- * Color-code marker based on sea surface temperature (°C).
- * Teal  < 27°C  → Normal / Cold
- * Amber 27–29.5 → Warm / High Fish Activity
- * Red   > 29.5  → Extreme Thermal Stress
+ * Color-code marker based on sea surface temperature (°C) — Cold Polar Theme.
+ * Deep Freeze  < 15°C → Deep Sapphire Blue
+ * Cold Waters  15–22°C → Electric Cyan
+ * Cool Temperate 22–27°C → Aquamarine Teal
+ * Warm  27–29.5°C → Amber
+ * Extreme  > 29.5°C → Coral Red
  */
 export function getSstColor(temp: number): string {
-  if (temp < 27) return "#06B6D4"; // teal
+  if (temp < 15) return "#0F172A"; // deep sapphire blue
+  if (temp <= 22) return "#06B6D4"; // electric cyan
+  if (temp <= 27) return "#14B8A6"; // aquamarine teal
   if (temp <= 29.5) return "#F59E0B"; // amber
   return "#EF4444"; // coral red
 }

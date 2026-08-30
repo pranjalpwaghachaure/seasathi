@@ -303,7 +303,7 @@ export default function FishermenMode({ language = "en" }: { language?: string }
               <MapContainer
                 center={MAP_CENTER}
                 zoom={MAP_ZOOM}
-                className="w-full h-full"
+                className="w-full h-full icy-map-filter"
                 zoomControl={false}
                 attributionControl={false}
                 worldCopyJump={true}
@@ -311,7 +311,7 @@ export default function FishermenMode({ language = "en" }: { language?: string }
                 maxZoom={18}
               >
                 <TileLayer
-                  url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+                  url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager_labels_under/{z}/{x}/{y}{r}.png"
                   attribution='&copy; OpenStreetMap contributors'
                 />
                 <MapInvalidator center={[boat.lat, boat.lng]} />
@@ -425,7 +425,7 @@ export default function FishermenMode({ language = "en" }: { language?: string }
               {/* ── Floating Safety Status Card ──── */}
               <div className="absolute top-3 left-3 right-3 z-[1000]">
                 <motion.div
-                  className="rounded-xl border p-3 backdrop-blur-md bg-slate-900/80 border-slate-700/50"
+                  className="rounded-xl frost-glass p-3"
                   style={{
                     borderColor: `${getSafetyColor(status)}30`,
                   }}
@@ -479,7 +479,7 @@ export default function FishermenMode({ language = "en" }: { language?: string }
                 {REGION_PRESETS.map((preset) => (
                   <button
                     key={preset.id}
-                    className="rounded-full border border-slate-600/40 bg-slate-900/80 backdrop-blur-md px-2 py-0.5 text-[9px] text-white/60 hover:text-[#FACC15] hover:border-[#FACC15]/30 transition-colors"
+                    className="rounded-full frost-glass px-2 py-0.5 text-[9px] text-white/60 hover:text-[#FACC15] hover:border-[#FACC15]/30 transition-colors"
                     onClick={() => setFlyTarget({ center: preset.center, zoom: preset.zoom })}
                   >
                     {preset.emoji} {preset.label}
@@ -490,6 +490,19 @@ export default function FishermenMode({ language = "en" }: { language?: string }
               {/* ── Radar Sweep Overlay ─────────────────── */}
               <div className="absolute top-16 right-3 z-[1000]">
                 <div className="radar-sweep" />
+              </div>
+
+              {/* ── Frost Weather Badge ──────────────── */}
+              <div className="absolute bottom-4 left-3 z-[1000]">
+                <div className="frost-badge rounded-xl px-3 py-2 text-[9px] text-white/70">
+                  <div className="flex items-center gap-2">
+                    <span>🧊 {weather.surfaceTemp}°C</span>
+                    <span className="text-white/30">|</span>
+                    <span>💨 {weather.windSpeed}kn {weather.windDirection}</span>
+                    <span className="text-white/30">|</span>
+                    <span>🌊 {weather.waveHeight}m</span>
+                  </div>
+                </div>
               </div>
 
               {/* ── Simulate Border Button ──────────── */}

@@ -196,7 +196,7 @@ export default function FishermenChatbot({ language }: FishermenChatbotProps) {
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
-            className="fixed bottom-24 right-4 z-[999] flex items-center gap-2 rounded-full bg-gradient-to-r from-[#00D2FF] to-[#0EA5E9] px-5 py-3 text-sm font-bold text-[#061424] shadow-2xl shadow-[#00D2FF]/30 hover:shadow-[#00D2FF]/50 transition-shadow"
+            className="fixed bottom-24 right-4 z-[999] flex items-center gap-2 rounded-full bg-gradient-to-r from-cyan-400 to-cyan-500 px-5 py-3 text-sm font-bold text-[#061424] shadow-2xl shadow-cyan-400/30 hover:shadow-cyan-400/50 transition-shadow glow-cyan-400"
             onClick={() => setIsOpen(true)}
           >
             <MessageCircle className="size-5" />
@@ -214,10 +214,10 @@ export default function FishermenChatbot({ language }: FishermenChatbotProps) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 40, scale: 0.95 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="fixed bottom-4 right-4 left-4 sm:left-auto sm:w-[400px] z-[999] flex flex-col max-h-[75vh] rounded-2xl border border-cyan-500/30 bg-slate-900/90 backdrop-blur-md shadow-2xl shadow-[#00D2FF]/10 overflow-hidden"
+            className="fixed bottom-4 right-4 left-4 sm:left-auto sm:w-[400px] z-[999] flex flex-col max-h-[75vh] rounded-2xl frost-glass shadow-2xl overflow-hidden"
           >
             {/* ── Header ─────────────────────── */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-700/50 bg-slate-900/60">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-cyan-500/15 bg-[#0A1929]/60">
               <div className="flex items-center gap-2">
                 <div className="flex items-center justify-center size-8 rounded-lg bg-[#00D2FF]/15">
                   <Bot className="size-4 text-[#00D2FF]" />
@@ -309,7 +309,7 @@ export default function FishermenChatbot({ language }: FishermenChatbotProps) {
             </div>
 
             {/* ── Quick Chips ────────────────── */}
-            <div className="px-3 py-2 border-t border-slate-700/30">
+            <div className="px-3 py-2 border-t border-cyan-500/15">
               <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-none">
                 {QUICK_CHIPS.map((chip) => (
                   <button

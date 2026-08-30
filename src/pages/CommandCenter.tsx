@@ -242,10 +242,11 @@ function MapLayers({
               key={`wind-${i}`}
               center={[pos[0], pos[1]]}
               radius={3}
+              className="cold-particle"
               pathOptions={{
-                fillColor: "#38bdf8",
+                fillColor: "#E0F2FE",
                 fillOpacity: 0.7,
-                color: "#38bdf8",
+                color: "#E0F2FE",
                 weight: 1,
               }}
             >
@@ -319,9 +320,10 @@ function MapLayers({
       <Polyline
         positions={SAFE_ROUTE}
         pathOptions={{
-          color: "#22c55e",
+          color: "#06B6D4",
           weight: 3,
           opacity: 0.8,
+          dashArray: "10, 6",
         }}
       />
 
@@ -489,7 +491,7 @@ export default function CommandCenter() {
   return (
     <div className="flex h-[calc(100vh-4rem)]">
       {/* ═══ LEFT SIDEBAR: AI Chat ═══ */}
-      <div className="w-[340px] flex-shrink-0 border-r border-slate-700/30 bg-[#061424] flex flex-col">
+      <div className="w-[340px] flex-shrink-0 border-r border-cyan-500/10 bg-[#061424] flex flex-col">
         {/* Header */}
         <div className="p-3 border-b border-white/[0.06]">
           <div className="flex items-center gap-2">
@@ -687,7 +689,7 @@ export default function CommandCenter() {
         <MapContainer
           center={MAP_CENTER}
           zoom={MAP_ZOOM}
-          className="w-full h-full"
+          className="w-full h-full icy-map-filter"
           zoomControl={true}
           worldCopyJump={true}
           minZoom={2}
@@ -714,7 +716,7 @@ export default function CommandCenter() {
           {REGION_PRESETS.map((preset) => (
             <button
               key={preset.id}
-              className="rounded-full border border-slate-600/40 bg-slate-900/80 backdrop-blur-md px-2.5 py-1 text-[10px] text-white/70 hover:text-[#FACC15] hover:border-[#FACC15]/30 transition-colors shadow-lg"
+              className="rounded-full frost-glass px-2.5 py-1 text-[10px] text-white/70 hover:text-[#FACC15] hover:border-[#FACC15]/30 transition-colors shadow-lg"
               onClick={() => setFlyTarget({ center: preset.center, zoom: preset.zoom })}
             >
               {preset.emoji} {preset.label}
@@ -722,8 +724,21 @@ export default function CommandCenter() {
           ))}
         </div>
 
+        {/* Frost Weather Badge */}
+        <div className="absolute bottom-3 left-3 z-[1000]">
+          <div className="frost-badge rounded-xl px-3 py-2 text-[10px] text-white/70">
+            <div className="flex items-center gap-3">
+              <span>🧊 SST: {marineData?.seaSurfaceTemperature?.toFixed(1) ?? '18.4'}°C</span>
+              <span className="text-white/40">|</span>
+              <span>💨 Wind: {marineData?.oceanCurrentVelocity?.toFixed(0) ?? '16'}kn NW</span>
+              <span className="text-white/40">|</span>
+              <span>🌊 Waves: {marineData?.waveHeight?.toFixed(1) ?? '2.1'}m</span>
+            </div>
+          </div>
+        </div>
+
         {/* Layer Control Panel */}
-        <div className="absolute top-3 right-3 z-[1000] w-56 rounded-xl border border-slate-600/40 bg-slate-900/80 backdrop-blur-md p-3 shadow-2xl">
+        <div className="absolute top-3 right-3 z-[1000] w-56 rounded-xl frost-glass p-3 shadow-2xl">
           <div className="flex items-center gap-2 mb-3">
             <Layers className="size-3.5 text-[#FACC15]" />
             <span className="text-xs font-bold text-white">Layer Controls</span>
@@ -789,7 +804,7 @@ export default function CommandCenter() {
       </div>
 
       {/* ═══ RIGHT SIDEBAR: Analytics ═══ */}
-      <div className="w-[300px] flex-shrink-0 border-l border-slate-700/30 bg-[#061424] flex flex-col overflow-hidden">
+      <div className="w-[300px] flex-shrink-0 border-l border-cyan-500/10 bg-[#061424] flex flex-col overflow-hidden">
         <ScrollArea className="flex-1">
           {/* Live Marine Telemetry (Open-Meteo) */}
           <div className="p-3 border-b border-white/[0.06]">

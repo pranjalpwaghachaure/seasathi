@@ -110,7 +110,7 @@ export const BASEMAP_TILES: Record<BasemapId, { label: string; url: string; emoj
   dark: {
     label: "Dark Matter Global",
     emoji: "🌌",
-    url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
+    url: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager_labels_under/{z}/{x}/{y}{r}.png",
   },
   satellite: {
     label: "Global Satellite View",
