@@ -20,6 +20,8 @@ import {
 } from "@/lib/mockData";
 import { fetchAqualinkSites, getValidSites, getSiteCoords, getSstColor, hasAlert, findNearestSite } from "@/lib/aqualink";
 import type { AqualinkSite } from "@/lib/aqualink";
+import { fetchCopernicusMarineData } from "@/lib/marineApi";
+import type { CopernicusMarineData } from "@/lib/marineApi";
 
 /* ── Types ─────────────────────────────────── */
 
@@ -41,11 +43,12 @@ const QUICK_CHIPS = [
   { icon: "🌊", label: "Is wave height safe near me?", keyword: "wave" },
   { icon: "⚠️", label: "How far am I from the IMBL Border?", keyword: "imbl" },
   { icon: "⛈️", label: "Any storm or cyclone warning today?", keyword: "storm" },
+  { icon: "🌀", label: "What are ocean currents and salinity?", keyword: "ocean" },
 ];
 
 /* ── Context-Aware Response Engine ──────────── */
 
-function getAIResponse(query: string, aqualinkData: AqualinkSite[]): string {
+function getAIResponse(query: string, aqualinkData: AqualinkSite[], copernicusData: CopernicusMarineData | null): string {
   const q = query.toLowerCase();
   const validData = getValidSites(aqualinkData);
 
@@ -65,11 +68,23 @@ function getAIResponse(query: string, aqualinkData: AqualinkSite[]): string {
     return `🐟 Nearest Potential Fishing Zone: ${nearest.name}\n\nDistance: ${dist} nautical miles ${bearing}\nProductivity: ${nearest.productivity.toUpperCase()}\nSpecies found: ${nearest.species.join(", ")}\n\nWater temp: ${DEFAULT_WEATHER.surfaceTemp}°C — ideal for ${nearest.species[0]} aggregation. I recommend departing within the next 2 hours for the best catch window.${aqualinkInfo}`;
   }
 
+  // Ocean current / salinity query (Copernicus)
+  if (q.includes("current") || q.includes("salinity") || q.includes("ocean") || q.includes("stream")) {
+    if (copernicusData) {
+      return `🌀 Copernicus Marine Service (CMEMS PHY_001_024):\n\nSurface Current: ${copernicusData.surfaceCurrentVelocity?.toFixed(2) ?? '—'} m/s @ ${copernicusData.surfaceCurrentDirection?.toFixed(0) ?? '—'}°\nSalinity: ${copernicusData.salinity?.toFixed(1) ?? '—'} PSU\nSea Surface Height Anomaly: ${copernicusData.seaSurfaceHeightAnomaly ?? '—'} cm\nSST: ${copernicusData.seaSurfaceTemperature?.toFixed(1) ?? '—'}°C\n\nDepth Profile Available: ${copernicusData.depthLevels.join(', ')}\n\nData sourced from Copernicus Marine Environment Monitoring Service global analysis and forecast product.`;
+    }
+    return `🌀 Ocean current and salinity data is loading from Copernicus Marine Service. Please try again in a moment.`;
+  }
+
   // Wave/weather query
   if (q.includes("wave") || q.includes("weather") || q.includes("safe") || q.includes("wind")) {
     const w = DEFAULT_WEATHER;
     const safe = w.waveHeight < 2.5;
-    return `🌊 Current Sea Conditions:\n\nWave Height: ${w.waveHeight}m ${safe ? "✅ SAFE" : "⚠️ CAUTION"}\nWind: ${w.windSpeed} knots ${w.windDirection}\nSurface Temp: ${w.surfaceTemp}°C\nVisibility: ${w.visibility}\nTide: ${w.tideStatus}\n\n${safe ? "Conditions are safe for fishing. Waves are within acceptable limits." : "Caution advised. Waves are building. Consider delaying departure or heading to sheltered zones."}`;
+    let copernicusSnippet = "";
+    if (copernicusData) {
+      copernicusSnippet = `\n\n📊 Copernicus CMEMS Data:\nCurrent: ${copernicusData.surfaceCurrentVelocity?.toFixed(2) ?? '—'} m/s | Salinity: ${copernicusData.salinity?.toFixed(1) ?? '—'} PSU | SSHA: ${copernicusData.seaSurfaceHeightAnomaly ?? '—'} cm`;
+    }
+    return `🌊 Current Sea Conditions:\n\nWave Height: ${w.waveHeight}m ${safe ? "✅ SAFE" : "⚠️ CAUTION"}\nWind: ${w.windSpeed} knots ${w.windDirection}\nSurface Temp: ${w.surfaceTemp}°C\nVisibility: ${w.visibility}\nTide: ${w.tideStatus}\n\n${safe ? "Conditions are safe for fishing. Waves are within acceptable limits." : "Caution advised. Waves are building. Consider delaying departure or heading to sheltered zones."}${copernicusSnippet}`;
   }
 
   // IMBL query
@@ -153,7 +168,7 @@ export default function FishermenChatbot({ language }: FishermenChatbotProps) {
 
     // Simulate AI processing delay
     setTimeout(() => {
-      const response = getAIResponse(query, aqualinkSites);
+      const response = getAIResponse(query, aqualinkSites, copernicusData);
       addMessage(response, "assistant");
       setIsThinking(false);
     }, 800 + Math.random() * 600);
@@ -166,6 +181,13 @@ export default function FishermenChatbot({ language }: FishermenChatbotProps) {
     fetchAqualinkSites().then((sites) => {
       setAqualinkSites(getValidSites(sites));
     });
+  }, []);
+
+  // Copernicus Marine Service state
+  const [copernicusData, setCopernicusData] = useState<CopernicusMarineData | null>(null);
+
+  useEffect(() => {
+    fetchCopernicusMarineData(USER_BOAT.lat, USER_BOAT.lng).then(setCopernicusData);
   }, []);
 
   const handleMicPress = useCallback(() => {

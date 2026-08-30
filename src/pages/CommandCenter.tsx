@@ -734,9 +734,7 @@ export default function CommandCenter() {
           <TileLayer
             key={basemap}
             url={BASEMAP_TILES[basemap].url}
-            subdomains={['a', 'b', 'c']}
-            maxZoom={19}
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            attribution='&copy; Esri, HERE, Garmin | OpenStreetMap'
           />
           <MapInvalidate />
           {flyTarget && <FlyToPreset center={flyTarget.center} zoom={flyTarget.zoom} />}

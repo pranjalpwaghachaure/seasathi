@@ -327,10 +327,8 @@ export default function FishermenMode({ language = "en" }: { language?: string }
                 maxZoom={18}
               >
                 <TileLayer
-                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                  subdomains={['a', 'b', 'c']}
-                  maxZoom={19}
-                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                  url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}"
+                  attribution='&copy; Esri, HERE, Garmin'
                 />
                 <MapInvalidator center={safeBoatPosition(boat)} />
                 {flyTarget && (
