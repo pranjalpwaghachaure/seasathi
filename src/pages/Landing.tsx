@@ -502,49 +502,6 @@ export default function Landing({ onEnterMode }: LandingProps) {
       </section>
 
       {/* ═══════════════════════════════════════════
-          BOTTOM CTA — Dark
-         ═══════════════════════════════════════════ */}
-      <section className="bg-gradient-to-b from-[#061424] to-[#0B253C] py-20">
-        <div className="max-w-3xl mx-auto px-4 text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-          >
-            <Shield className="size-12 text-[#00D2FF] mx-auto mb-6" />
-            <h2 className="text-3xl sm:text-4xl font-black text-white mb-4">
-              Protecting Those Who <span className="text-[#22c55e]">Feed a Nation</span>
-            </h2>
-            <p className="text-white/60 mb-8 max-w-lg mx-auto">
-              India's fishermen venture into unpredictable waters every single day. SeaSathi
-              equips them — and the authorities who protect them — with the intelligence
-              to act, not guess.
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <motion.button
-                className="flex items-center gap-2 rounded-xl bg-[#00D2FF] px-8 py-3.5 text-sm font-bold text-[#061424] shadow-2xl shadow-[#00D2FF]/25"
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                onClick={() => onEnterMode("fishermen")}
-              >
-                <Ship className="size-4" />
-                Open Field Mode
-              </motion.button>
-              <motion.button
-                className="flex items-center gap-2 rounded-xl border border-white/20 bg-white/5 px-8 py-3.5 text-sm font-bold text-white"
-                whileHover={{ scale: 1.03 }}
-                whileTap={{ scale: 0.97 }}
-                onClick={() => onEnterMode("command")}
-              >
-                <Globe className="size-4" />
-                Open Command Center
-              </motion.button>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ═══════════════════════════════════════════
           FOOTER — Light
          ═══════════════════════════════════════════ */}
       <footer className="bg-white border-t border-gray-200 py-8">
