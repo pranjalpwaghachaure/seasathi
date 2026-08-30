@@ -246,3 +246,26 @@ button[data-variant].seasathi-btn:active {
 .sos-pulse {
   animation: sos-glow 2s ease-in-out infinite;
 }
+
+/* PWA mobile safe-area inset */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.safe-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+/* Mobile viewport fix for 100dvh */
+@supports (height: 100dvh) {
+  .h-dvh { height: 100dvh; }
+}
+
+/* Bottom sheet overlay for mobile chatbot */
+.bottom-sheet-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}

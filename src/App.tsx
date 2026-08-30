@@ -22,6 +22,16 @@ export default function SeaSathiApp() {
     setSosOpen(true);
   }, []);
 
+  // FishermenMode is a self-contained PWA — renders full-screen without header
+  if (mode === "fishermen") {
+    return (
+      <div className="min-h-screen bg-[#061424]">
+        <FishermenMode language={language} />
+        <SOSModal isOpen={sosOpen} onClose={() => setSosOpen(false)} />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#061424]">
       <Header
@@ -35,7 +45,6 @@ export default function SeaSathiApp() {
       {/* Main content area - offset for fixed header */}
       <main className="pt-16">
         {mode === "landing" && <Landing onEnterMode={handleEnterMode} />}
-        {mode === "fishermen" && <FishermenMode language={language} />}
         {mode === "command" && <CommandCenter />}
       </main>
 
