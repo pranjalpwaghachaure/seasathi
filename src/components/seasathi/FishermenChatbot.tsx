@@ -18,7 +18,7 @@ import {
   DEFAULT_WEATHER,
   getZoneColor,
 } from "@/lib/mockData";
-import { fetchAqualinkSites, getSstColor, hasAlert, findNearestSite } from "@/lib/aqualink";
+import { fetchAqualinkSites, getValidSites, getSiteCoords, getSstColor, hasAlert, findNearestSite } from "@/lib/aqualink";
 import type { AqualinkSite } from "@/lib/aqualink";
 
 /* ── Types ─────────────────────────────────── */
@@ -47,6 +47,7 @@ const QUICK_CHIPS = [
 
 function getAIResponse(query: string, aqualinkData: AqualinkSite[]): string {
   const q = query.toLowerCase();
+  const validData = getValidSites(aqualinkData);
 
   // PFZ query
   if (q.includes("pfz") || q.includes("fishing zone") || q.includes("nearest") || q.includes("fish")) {
@@ -54,9 +55,9 @@ function getAIResponse(query: string, aqualinkData: AqualinkSite[]): string {
     const dist = "12.4";
     const bearing = "SW 225°";
     let aqualinkInfo = "";
-    if (aqualinkData.length > 0) {
-      const nearestBuoy = findNearestSite(aqualinkData, USER_BOAT.lat, USER_BOAT.lng);
-      if (nearestBuoy) {
+    if (validData.length > 0) {
+      const nearestBuoy = findNearestSite(validData, USER_BOAT.lat, USER_BOAT.lng);
+      if (nearestBuoy && getSiteCoords(nearestBuoy)) {
         const buoyTemp = nearestBuoy.topTemperature?.value ?? 0;
         aqualinkInfo = `\n\n📡 Aqualink Buoy Data (${nearestBuoy.name}):\nSurface Temp: ${buoyTemp.toFixed(1)}°C ${hasAlert(nearestBuoy) ? "⚠️ Thermal Alert" : "✅ Normal"}\nBottom Temp: ${nearestBuoy.bottomTemperature?.value?.toFixed(1) ?? "N/A"}°C\nWeekly Alert Level: ${nearestBuoy.weeklyAlertLevel ?? 0}`;
       }
@@ -163,7 +164,7 @@ export default function FishermenChatbot({ language }: FishermenChatbotProps) {
 
   useEffect(() => {
     fetchAqualinkSites().then((sites) => {
-      setAqualinkSites(sites);
+      setAqualinkSites(getValidSites(sites));
     });
   }, []);
 

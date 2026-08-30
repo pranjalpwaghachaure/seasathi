@@ -16,6 +16,42 @@ export interface AqualinkSite {
 const API_URL = "https://ocean-systems.uc.r.appspot.com/api/sites";
 
 /**
+ * Check whether a coordinate pair is a valid finite number.
+ */
+export function isValidCoord(lat: unknown, lng: unknown): boolean {
+  return (
+    typeof lat === "number" &&
+    typeof lng === "number" &&
+    !isNaN(lat) &&
+    !isNaN(lng) &&
+    isFinite(lat) &&
+    isFinite(lng) &&
+    lat >= -90 && lat <= 90 &&
+    lng >= -180 && lng <= 180
+  );
+}
+
+/**
+ * Extract latitude/longitude from a site, handling key variations.
+ * Returns null if coordinates are invalid.
+ */
+export function getSiteCoords(site: AqualinkSite): [number, number] | null {
+  const lat = site.latitude ?? (site as Record<string, unknown>).lat as number | undefined;
+  const lng = site.longitude ??
+    (site as Record<string, unknown>).lng as number | undefined ??
+    (site as Record<string, unknown>).lon as number | undefined;
+  if (!isValidCoord(lat, lng)) return null;
+  return [lat as number, lng as number];
+}
+
+/**
+ * Filter sites to only those with valid coordinates.
+ */
+export function getValidSites(sites: AqualinkSite[]): AqualinkSite[] {
+  return sites.filter((s) => getSiteCoords(s) !== null);
+}
+
+/**
  * Fetch all Aqualink buoy sites. Returns empty array on error.
  */
 export async function fetchAqualinkSites(): Promise<AqualinkSite[]> {
@@ -73,11 +109,14 @@ export function findNearestSite(
   lat: number,
   lng: number,
 ): AqualinkSite | null {
-  if (sites.length === 0) return null;
-  let nearest = sites[0];
+  const valid = getValidSites(sites);
+  if (valid.length === 0) return null;
+  let nearest = valid[0];
   let minDist = Infinity;
-  for (const s of sites) {
-    const d = Math.sqrt((s.latitude - lat) ** 2 + (s.longitude - lng) ** 2);
+  for (const s of valid) {
+    const coords = getSiteCoords(s);
+    if (!coords) continue;
+    const d = Math.sqrt((coords[0] - lat) ** 2 + (coords[1] - lng) ** 2);
     if (d < minDist) {
       minDist = d;
       nearest = s;

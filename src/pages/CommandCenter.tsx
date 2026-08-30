@@ -36,7 +36,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import FuelSavingsCard from "@/components/seasathi/FuelSavingsCard";
-import { fetchAqualinkSites, getSstColor, hasAlert } from "@/lib/aqualink";
+import { fetchAqualinkSites, getValidSites, getSiteCoords, getSstColor, hasAlert } from "@/lib/aqualink";
 import type { AqualinkSite } from "@/lib/aqualink";
 import {
   MAP_CENTER,
@@ -173,14 +173,16 @@ function MapLayers({
 
       {/* Aqualink Live Ocean Buoys */}
       {activeLayers.includes("aqualink") &&
-        aqualinkSites.map((site) => {
+        getValidSites(aqualinkSites).map((site) => {
+          const coords = getSiteCoords(site);
+          if (!coords) return null;
           const temp = site.topTemperature?.value ?? 0;
           const color = getSstColor(temp);
           const alert = hasAlert(site);
           return (
             <CircleMarker
               key={`aq-${site.id}`}
-              center={[site.latitude, site.longitude]}
+              center={coords}
               radius={6}
               pathOptions={{
                 fillColor: color,

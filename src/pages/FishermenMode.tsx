@@ -53,7 +53,7 @@ import {
   getZoneColor,
   type UserBoat,
 } from "@/lib/mockData";
-import { fetchAqualinkSites, getSstColor, hasAlert } from "@/lib/aqualink";
+import { fetchAqualinkSites, getValidSites, getSiteCoords, getSstColor, hasAlert } from "@/lib/aqualink";
 import type { AqualinkSite } from "@/lib/aqualink";
 
 /* ── Types ──────────────────────────────────── */
@@ -341,14 +341,16 @@ export default function FishermenMode({ language = "en" }: { language?: string }
                 />
 
                 {/* Aqualink Live Ocean Buoys */}
-                {aqualinkSites.slice(0, 30).map((site) => {
+                {getValidSites(aqualinkSites).slice(0, 30).map((site) => {
+                  const coords = getSiteCoords(site);
+                  if (!coords) return null;
                   const temp = site.topTemperature?.value ?? 0;
                   const color = getSstColor(temp);
                   const alert = hasAlert(site);
                   return (
                     <CircleMarker
                       key={`aq-${site.id}`}
-                      center={[site.latitude, site.longitude]}
+                      center={coords}
                       radius={5}
                       pathOptions={{
                         fillColor: color,
