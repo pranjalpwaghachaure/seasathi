@@ -7,6 +7,7 @@ import {
   Polyline,
   Polygon,
   Popup,
+  Tooltip,
   useMap,
 } from "react-leaflet";
 import {
@@ -35,6 +36,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import FuelSavingsCard from "@/components/seasathi/FuelSavingsCard";
+import { fetchAqualinkSites, filterIndiaSites, getSstColor, hasAlert } from "@/lib/aqualink";
+import type { AqualinkSite } from "@/lib/aqualink";
 import {
   MAP_CENTER,
   MAP_ZOOM,
@@ -59,9 +62,11 @@ import {
 function MapLayers({
   activeLayers,
   boatPos,
+  aqualinkSites,
 }: {
   activeLayers: string[];
   boatPos: [number, number];
+  aqualinkSites: AqualinkSite[];
 }) {
   return (
     <>
@@ -147,6 +152,53 @@ function MapLayers({
           />
         </>
       )}
+
+      {/* Aqualink Live Ocean Buoys */}
+      {activeLayers.includes("aqualink") &&
+        aqualinkSites.map((site) => {
+          const temp = site.topTemperature?.value ?? 0;
+          const color = getSstColor(temp);
+          const alert = hasAlert(site);
+          return (
+            <CircleMarker
+              key={`aq-${site.id}`}
+              center={[site.latitude, site.longitude]}
+              radius={6}
+              pathOptions={{
+                fillColor: color,
+                fillOpacity: 0.85,
+                color: color,
+                weight: 2,
+                opacity: 0.9,
+              }}
+            >
+              <Tooltip>
+                <span className="text-xs font-medium">{site.name} | Temp: {temp.toFixed(1)}°C</span>
+              </Tooltip>
+              <Popup>
+                <div className="min-w-[180px]" style={{ background: "#0A1628", color: "white", padding: "12px", borderRadius: "8px", border: `1px solid ${color}40` }}>
+                  <div style={{ fontWeight: 700, fontSize: "13px", marginBottom: 4 }}>{site.name}</div>
+                  <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.5)", marginBottom: 8 }}>{site.country ?? "Ocean Site"}</div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
+                    <div>
+                      <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.4)", textTransform: "uppercase" }}>SST (Top)</div>
+                      <div style={{ fontSize: "14px", fontWeight: 800, color }}>{temp.toFixed(1)}°C</div>
+                    </div>
+                    <div>
+                      <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.4)", textTransform: "uppercase" }}>Seabed (Bottom)</div>
+                      <div style={{ fontSize: "14px", fontWeight: 800, color: "#0EA5E9" }}>{site.bottomTemperature?.value?.toFixed(1) ?? "N/A"}°C</div>
+                    </div>
+                  </div>
+                  <div style={{ marginTop: 8, fontSize: "10px" }}>
+                    <span style={{ color: "rgba(255,255,255,0.4)", marginRight: 4 }}>Heatwave Alert:</span>
+                    <span style={{ color: alert ? "#EF4444" : "#22c55e", fontWeight: 700 }}>{alert ? `Level ${site.weeklyAlertLevel} ⚠️` : "None ✅"}</span>
+                  </div>
+                  <div style={{ marginTop: 8, fontSize: "10px", color: "rgba(255,255,255,0.3)", fontStyle: "italic" }}>Click to calculate safe route to buoy</div>
+                </div>
+              </Popup>
+            </CircleMarker>
+          );
+        })}
 
       {/* Wind Vectors */}
       {activeLayers.includes("wind") && (
@@ -234,11 +286,19 @@ export default function CommandCenter() {
     LAYER_OPTIONS.filter((l) => l.checked).map((l) => l.id),
   );
   const [isThinking, setIsThinking] = useState(false);
+  const [aqualinkSites, setAqualinkSites] = useState<AqualinkSite[]>([]);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // Fetch Aqualink buoy data on mount
+  useEffect(() => {
+    fetchAqualinkSites().then((sites) => {
+      setAqualinkSites(filterIndiaSites(sites));
+    });
+  }, []);
 
   const toggleLayer = useCallback((id: string) => {
     setActiveLayers((prev) =>
@@ -522,6 +582,7 @@ export default function CommandCenter() {
           <MapLayers
             activeLayers={activeLayers}
             boatPos={[USER_BOAT.lat, USER_BOAT.lng]}
+            aqualinkSites={aqualinkSites}
           />
         </MapContainer>
 

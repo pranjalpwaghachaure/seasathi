@@ -18,6 +18,8 @@ import {
   DEFAULT_WEATHER,
   getZoneColor,
 } from "@/lib/mockData";
+import { fetchAqualinkSites, filterIndiaSites, getSstColor, hasAlert, findNearestSite } from "@/lib/aqualink";
+import type { AqualinkSite } from "@/lib/aqualink";
 
 /* ── Types ─────────────────────────────────── */
 
@@ -43,7 +45,7 @@ const QUICK_CHIPS = [
 
 /* ── Context-Aware Response Engine ──────────── */
 
-function getAIResponse(query: string): string {
+function getAIResponse(query: string, aqualinkData: AqualinkSite[]): string {
   const q = query.toLowerCase();
 
   // PFZ query
@@ -51,7 +53,15 @@ function getAIResponse(query: string): string {
     const nearest = FISHING_ZONES[0];
     const dist = "12.4";
     const bearing = "SW 225°";
-    return `🐟 Nearest Potential Fishing Zone: ${nearest.name}\n\nDistance: ${dist} nautical miles ${bearing}\nProductivity: ${nearest.productivity.toUpperCase()}\nSpecies found: ${nearest.species.join(", ")}\n\nWater temp: ${DEFAULT_WEATHER.surfaceTemp}°C — ideal for ${nearest.species[0]} aggregation. I recommend departing within the next 2 hours for the best catch window.`;
+    let aqualinkInfo = "";
+    if (aqualinkData.length > 0) {
+      const nearestBuoy = findNearestSite(aqualinkData, USER_BOAT.lat, USER_BOAT.lng);
+      if (nearestBuoy) {
+        const buoyTemp = nearestBuoy.topTemperature?.value ?? 0;
+        aqualinkInfo = `\n\n📡 Aqualink Buoy Data (${nearestBuoy.name}):\nSurface Temp: ${buoyTemp.toFixed(1)}°C ${hasAlert(nearestBuoy) ? "⚠️ Thermal Alert" : "✅ Normal"}\nBottom Temp: ${nearestBuoy.bottomTemperature?.value?.toFixed(1) ?? "N/A"}°C\nWeekly Alert Level: ${nearestBuoy.weeklyAlertLevel ?? 0}`;
+      }
+    }
+    return `🐟 Nearest Potential Fishing Zone: ${nearest.name}\n\nDistance: ${dist} nautical miles ${bearing}\nProductivity: ${nearest.productivity.toUpperCase()}\nSpecies found: ${nearest.species.join(", ")}\n\nWater temp: ${DEFAULT_WEATHER.surfaceTemp}°C — ideal for ${nearest.species[0]} aggregation. I recommend departing within the next 2 hours for the best catch window.${aqualinkInfo}`;
   }
 
   // Wave/weather query
@@ -142,11 +152,20 @@ export default function FishermenChatbot({ language }: FishermenChatbotProps) {
 
     // Simulate AI processing delay
     setTimeout(() => {
-      const response = getAIResponse(query);
+      const response = getAIResponse(query, aqualinkSites);
       addMessage(response, "assistant");
       setIsThinking(false);
     }, 800 + Math.random() * 600);
   }, [input, isThinking, addMessage]);
+
+  // Aqualink state
+  const [aqualinkSites, setAqualinkSites] = useState<AqualinkSite[]>([]);
+
+  useEffect(() => {
+    fetchAqualinkSites().then((sites) => {
+      setAqualinkSites(filterIndiaSites(sites));
+    });
+  }, []);
 
   const handleMicPress = useCallback(() => {
     if (isListening) return;

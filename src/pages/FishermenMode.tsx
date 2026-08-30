@@ -52,6 +52,8 @@ import {
   getZoneColor,
   type UserBoat,
 } from "@/lib/mockData";
+import { fetchAqualinkSites, filterIndiaSites, getSstColor, hasAlert } from "@/lib/aqualink";
+import type { AqualinkSite } from "@/lib/aqualink";
 
 /* ── Types ──────────────────────────────────── */
 type MobileTab = "map" | "voice" | "weather" | "sos";
@@ -128,6 +130,14 @@ export default function FishermenMode({ language = "en" }: { language?: string }
   const [voiceInputQuery, setVoiceInputQuery] = useState("");
   const [voiceInputResponse, setVoiceInputResponse] = useState("");
   const [batteryLevel] = useState(84);
+  const [aqualinkSites, setAqualinkSites] = useState<AqualinkSite[]>([]);
+
+  // Fetch Aqualink buoy data on mount
+  useEffect(() => {
+    fetchAqualinkSites().then((sites) => {
+      setAqualinkSites(filterIndiaSites(sites));
+    });
+  }, []);
   const [sosSent, setSosSent] = useState(false);
   const [sosCountdown, setSosCountdown] = useState(0);
   const [sosStage, setSosStage] = useState<"idle" | "countdown" | "sent">("idle");
@@ -313,6 +323,33 @@ export default function FishermenMode({ language = "en" }: { language?: string }
                     opacity: 0.8,
                   }}
                 />
+
+                {/* Aqualink Live Ocean Buoys */}
+                {aqualinkSites.slice(0, 30).map((site) => {
+                  const temp = site.topTemperature?.value ?? 0;
+                  const color = getSstColor(temp);
+                  const alert = hasAlert(site);
+                  return (
+                    <CircleMarker
+                      key={`aq-${site.id}`}
+                      center={[site.latitude, site.longitude]}
+                      radius={5}
+                      pathOptions={{
+                        fillColor: color,
+                        fillOpacity: 0.85,
+                        color: color,
+                        weight: 2,
+                        opacity: 0.9,
+                      }}
+                    >
+                      <Popup>
+                        <strong>{site.name}</strong>
+                        <br />
+                        SST: {temp.toFixed(1)}°C {alert ? "⚠️" : ""}
+                      </Popup>
+                    </CircleMarker>
+                  );
+                })}
 
                 {/* Safe Fishing Points */}
                 {SAFE_FISHING_POINTS.map((point, i) => (

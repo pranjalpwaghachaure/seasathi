@@ -97,6 +97,7 @@ export const LAYER_OPTIONS = [
   { id: "pfz", label: "INCOIS Potential Fishing Zones", checked: true },
   { id: "imbl", label: "IMBL / EEZ Boundary Lines", checked: true },
   { id: "wind", label: "Live Wind Vector Arrows", checked: false },
+  { id: "aqualink", label: "Aqualink Live Ocean Buoys", checked: true },
 ] as const;
 
 // ── Coordinates (Visakhapatnam coast) ──────────
