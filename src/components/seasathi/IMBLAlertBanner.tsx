@@ -54,7 +54,7 @@ export default function IMBLAlertBanner({ isActive, distanceNM }: IMBLAlertBanne
           className="fixed top-20 left-1/2 -translate-x-1/2 z-[9998] max-w-xl w-[calc(100%-2rem)]"
         >
           <div
-            className={`flex items-center justify-between gap-3 rounded-xl border-2 px-4 py-2.5 shadow-2xl transition-colors ${
+            className={`flex items-center justify-between gap-3 rounded-xl border-2 px-4 py-2.5 shadow-2xl transition-colors hazard-flash-active ${
               flashOn
                 ? "border-[#EF4444] bg-[#EF4444]/15 shadow-[#EF4444]/30"
                 : "border-[#EF4444]/40 bg-[#EF4444]/8 shadow-[#EF4444]/10"

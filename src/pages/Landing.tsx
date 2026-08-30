@@ -337,7 +337,7 @@ export default function Landing({ onEnterMode }: LandingProps) {
             {capabilities.map((cap, i) => (
               <motion.div
                 key={cap.title}
-                className="group rounded-2xl border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md hover:border-gray-300 transition-all"
+                className="group seasathi-hover-card rounded-2xl border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md hover:border-gray-300 transition-all"
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.08 }}
@@ -384,7 +384,7 @@ export default function Landing({ onEnterMode }: LandingProps) {
             {agents.map((agent, i) => (
               <motion.div
                 key={agent.name}
-                className="group rounded-2xl border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md transition-all relative overflow-hidden"
+                className="group seasathi-hover-card rounded-2xl border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md transition-all relative overflow-hidden"
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.08 }}
@@ -456,7 +456,7 @@ export default function Landing({ onEnterMode }: LandingProps) {
                   </div>
 
                   {/* Step content */}
-                  <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm flex-1 hover:shadow-md transition-shadow">
+                  <div className="seasathi-hover-card rounded-2xl border border-gray-200 bg-white p-5 shadow-sm flex-1 hover:shadow-md transition-shadow">
                     <h3 className="text-base font-bold text-[#0F172A] mb-1">{step.title}</h3>
                     <p className="text-sm text-gray-500 leading-relaxed">{step.desc}</p>
                   </div>

@@ -307,19 +307,39 @@ export default function FishermenChatbot({ language }: FishermenChatbotProps) {
             {/* ── Input Bar ──────────────────── */}
             <div className="px-3 pb-3">
               <div className="flex items-center gap-2">
-                {/* Mic Button */}
-                <button
-                  className={`flex-shrink-0 flex items-center justify-center size-12 rounded-full transition-all ${
-                    isListening
-                      ? "bg-[#EF4444] shadow-lg shadow-[#EF4444]/30 mic-active"
-                      : "bg-[#FACC15] hover:bg-[#FACC15]/90 shadow-lg shadow-[#FACC15]/20"
-                  }`}
-                  onClick={handleMicPress}
-                  disabled={isListening || isThinking}
-                  title="Hold to speak in your language"
-                >
-                  <Mic className={`size-5 ${isListening ? "text-white" : "text-[#061424]"}`} />
-                </button>
+                {/* Mic Button with ripple + waveform */}
+                <div className="flex items-center gap-2">
+                  <div className="relative flex items-center justify-center">
+                    <button
+                      className={`relative z-10 flex items-center justify-center size-12 rounded-full transition-all ${
+                        isListening
+                          ? "bg-[#EF4444] shadow-lg shadow-[#EF4444]/30"
+                          : "bg-[#FACC15] hover:bg-[#FACC15]/90 shadow-lg shadow-[#FACC15]/20"
+                      }`}
+                      onClick={handleMicPress}
+                      disabled={isListening || isThinking}
+                      title="Hold to speak in your language"
+                    >
+                      <Mic className={`size-5 ${isListening ? "text-white" : "text-[#061424]"}`} />
+                    </button>
+                    {/* Ripple rings */}
+                    {isListening && (
+                      <>
+                        <div className="mic-ripple-ring absolute inset-0 rounded-full border-2 border-[#EF4444]/50" />
+                        <div className="mic-ripple-ring absolute inset-0 rounded-full border-2 border-[#EF4444]/35" />
+                        <div className="mic-ripple-ring absolute inset-0 rounded-full border border-[#EF4444]/20" />
+                      </>
+                    )}
+                  </div>
+                  {/* Audio waveform visualizer */}
+                  {isListening && (
+                    <div className="flex items-end gap-0.5 h-5">
+                      {[...Array(6)].map((_, i) => (
+                        <div key={i} className="waveform-bar bg-[#EF4444]" style={{ height: 8 + Math.random() * 12 }} />
+                      ))}
+                    </div>
+                  )}
+                </div>
 
                 {/* Text Input */}
                 <div className="flex-1 flex items-center gap-2 rounded-xl border border-slate-600/40 bg-slate-800/50 px-3 py-2">

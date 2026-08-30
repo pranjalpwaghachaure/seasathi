@@ -384,6 +384,11 @@ export default function FishermenMode({ language = "en" }: { language?: string }
                 </motion.div>
               </div>
 
+              {/* ── Radar Sweep Overlay ─────────────────── */}
+              <div className="absolute top-16 right-3 z-[1000]">
+                <div className="radar-sweep" />
+              </div>
+
               {/* ── Simulate Border Button ──────────── */}
               <div className="absolute bottom-4 right-3 z-[1000]">
                 <Button
@@ -427,16 +432,30 @@ export default function FishermenMode({ language = "en" }: { language?: string }
                   ) : (
                     <Mic className="size-12 text-[#061424]" />
                   )}
-                  {/* Pulse rings */}
+                  {/* Triple ripple rings */}
                   {voiceInputListening && (
                     <>
-                      <div className="absolute inset-0 rounded-full border-2 border-[#EF4444]/40 animate-ping" />
-                      <div className="absolute -inset-3 rounded-full border border-[#EF4444]/20 animate-ping" style={{ animationDelay: "0.3s" }} />
+                      <div className="mic-ripple-ring absolute inset-0 rounded-full border-2 border-[#EF4444]/50" />
+                      <div className="mic-ripple-ring absolute inset-0 rounded-full border-2 border-[#EF4444]/40" />
+                      <div className="mic-ripple-ring absolute inset-0 rounded-full border-2 border-[#EF4444]/30" />
                     </>
                   )}
                 </motion.div>
 
-                <p className="text-sm text-white/60 mt-6 text-center">
+                {/* Audio waveform visualizer */}
+                {voiceInputListening && (
+                  <div className="flex items-end justify-center gap-1 h-8 mt-6">
+                    {[...Array(8)].map((_, i) => (
+                      <div
+                        key={i}
+                        className="waveform-bar bg-[#EF4444]"
+                        style={{ height: 12 + Math.random() * 16 }}
+                      />
+                    ))}
+                  </div>
+                )}
+
+                <p className="text-sm text-white/60 mt-4 text-center">
                   {voiceInputListening ? "Listening..." : "Tap to Speak in Vernacular"}
                 </p>
                 <p className="text-[11px] text-white/30 mt-1 text-center">
@@ -835,9 +854,13 @@ export default function FishermenMode({ language = "en" }: { language?: string }
             ) : (
               <Mic className="size-6 text-[#061424]" />
             )}
-            {/* Pulse */}
+            {/* Triple ripple rings */}
             {voiceInputListening && (
-              <div className="absolute inset-0 rounded-full border-2 border-[#EF4444]/40 animate-ping" />
+              <>
+                <div className="mic-ripple-ring absolute inset-0 rounded-full border-2 border-[#EF4444]/50" />
+                <div className="mic-ripple-ring absolute inset-0 rounded-full border-2 border-[#EF4444]/35" />
+                <div className="mic-ripple-ring absolute inset-0 rounded-full border border-[#EF4444]/20" />
+              </>
             )}
           </motion.button>
         )}

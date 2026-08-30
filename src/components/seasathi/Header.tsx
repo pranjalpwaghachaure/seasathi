@@ -119,7 +119,7 @@ export default function Header({
           <Button
             variant="destructive"
             size="sm"
-            className="gap-1.5 bg-[#EF4444] hover:bg-[#EF4444]/80 text-white shadow-lg shadow-[#EF4444]/20 font-bold text-xs"
+            className="gap-1.5 bg-[#EF4444] hover:bg-[#EF4444]/80 text-white shadow-lg shadow-[#EF4444]/20 font-bold text-xs sos-glow-active"
             onClick={onSOS}
           >
             <AlertTriangle className="size-3.5" />
