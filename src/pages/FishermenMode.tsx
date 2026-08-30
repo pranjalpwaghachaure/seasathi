@@ -55,6 +55,8 @@ import {
 } from "@/lib/mockData";
 import { fetchAqualinkSites, getValidSites, getSiteCoords, getSstColor, hasAlert } from "@/lib/aqualink";
 import type { AqualinkSite } from "@/lib/aqualink";
+import { fetchMarineConditions, generateMockVessels, getVesselColor, getVesselRadius } from "@/lib/marineApi";
+import type { MarineConditions, AIVessel } from "@/lib/marineApi";
 
 /* ── Types ──────────────────────────────────── */
 type MobileTab = "map" | "voice" | "weather" | "sos";
@@ -141,12 +143,24 @@ export default function FishermenMode({ language = "en" }: { language?: string }
   const [batteryLevel] = useState(84);
   const [aqualinkSites, setAqualinkSites] = useState<AqualinkSite[]>([]);
   const [flyTarget, setFlyTarget] = useState<{ center: [number, number]; zoom: number } | null>(null);
+  const [marineData, setMarineData] = useState<MarineConditions | null>(null);
+  const [vessels, setVessels] = useState<AIVessel[]>([]);
 
   // Fetch Aqualink buoy data on mount (all global sites)
   useEffect(() => {
     fetchAqualinkSites().then((sites) => {
       setAqualinkSites(sites);
     });
+  }, []);
+
+  // Fetch live marine conditions
+  useEffect(() => {
+    fetchMarineConditions(boat.lat, boat.lng).then(setMarineData);
+  }, [boat.lat, boat.lng]);
+
+  // Generate nearby vessel traffic
+  useEffect(() => {
+    setVessels(generateMockVessels(boat.lat, boat.lng, 12, 4));
   }, []);
   const [sosSent, setSosSent] = useState(false);
   const [sosCountdown, setSosCountdown] = useState(0);
@@ -382,6 +396,27 @@ export default function FishermenMode({ language = "en" }: { language?: string }
                       weight: 1,
                     }}
                   />
+                ))}
+
+                {/* Live Vessel Traffic */}
+                {vessels.map((v) => (
+                  <CircleMarker
+                    key={`v-${v.mmsi}`}
+                    center={[v.lat, v.lng]}
+                    radius={getVesselRadius(v.status)}
+                    pathOptions={{
+                      fillColor: getVesselColor(v.vesselType),
+                      fillOpacity: 0.7,
+                      color: getVesselColor(v.vesselType),
+                      weight: 1,
+                    }}
+                  >
+                    <Popup>
+                      <strong style={{ fontSize: 11 }}>{v.name}</strong>
+                      <br />
+                      <span style={{ fontSize: 10 }}>{v.speed} kn · {v.heading}° · {v.vesselType}</span>
+                    </Popup>
+                  </CircleMarker>
                 ))}
 
                 <BoatTracker boat={boat} />
@@ -678,6 +713,31 @@ export default function FishermenMode({ language = "en" }: { language?: string }
                     <p className="text-[10px] text-white/30 mt-1">Vessel bearing</p>
                   </div>
                 </div>
+
+                {/* Live Ocean Telemetry */}
+                {marineData && (
+                  <div className="rounded-xl border border-[#00D2FF]/20 bg-[#00D2FF]/5 p-4">
+                    <h3 className="text-sm font-bold text-white mb-3">Live Ocean Telemetry</h3>
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="text-center">
+                        <div className="text-[9px] text-white/40 uppercase">Swell</div>
+                        <div className="text-lg font-black text-[#00D2FF]">{marineData.swellWaveHeight?.toFixed(1) ?? "—"}<span className="text-[10px]">m</span></div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-[9px] text-white/40 uppercase">Current</div>
+                        <div className="text-lg font-black text-emerald-400">{marineData.oceanCurrentVelocity?.toFixed(1) ?? "—"}<span className="text-[10px]">m/s</span></div>
+                      </div>
+                      <div className="text-center">
+                        <div className="text-[9px] text-white/40 uppercase">SST</div>
+                        <div className="text-lg font-black text-orange-400">{marineData.seaSurfaceTemperature?.toFixed(1) ?? "—"}<span className="text-[10px]">°C</span></div>
+                      </div>
+                    </div>
+                    <div className="mt-2 flex items-center gap-1.5 text-[9px] text-white/30">
+                      <Radio className="size-2.5" />
+                      <span>Open-Meteo Marine API • {vessels.length} nearby vessels</span>
+                    </div>
+                  </div>
+                )}
 
                 {/* 24h Forecast Summary */}
                 <div className="rounded-xl border border-slate-700/50 bg-slate-900/50 p-4">

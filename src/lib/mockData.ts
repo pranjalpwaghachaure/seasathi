@@ -98,6 +98,8 @@ export const LAYER_OPTIONS = [
   { id: "imbl", label: "IMBL / EEZ Boundary Lines", checked: true },
   { id: "wind", label: "Live Wind Vector Arrows", checked: false },
   { id: "aqualink", label: "Aqualink Live Ocean Buoys", checked: true },
+  { id: "incois", label: "INCOIS PFZ / Chlorophyll WMS", checked: false },
+  { id: "vessels", label: "Live Vessel Traffic (AIS)", checked: true },
 ] as const;
 
 // ── Basemap Tile Options ──────────────────────

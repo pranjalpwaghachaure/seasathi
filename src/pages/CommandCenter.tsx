@@ -32,12 +32,22 @@ import {
   Shield,
   Fish,
   Volume2,
+  Waves,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import FuelSavingsCard from "@/components/seasathi/FuelSavingsCard";
 import { fetchAqualinkSites, getValidSites, getSiteCoords, getSstColor, hasAlert } from "@/lib/aqualink";
 import type { AqualinkSite } from "@/lib/aqualink";
+import {
+  fetchMarineConditions,
+  fetchEEZGeometry,
+  geojsonToLeafletPositions,
+  generateMockVessels,
+  getVesselColor,
+  getVesselRadius,
+} from "@/lib/marineApi";
+import type { MarineConditions, EEZFeature, AIVessel } from "@/lib/marineApi";
 import {
   MAP_CENTER,
   MAP_ZOOM,
@@ -68,10 +78,14 @@ function MapLayers({
   activeLayers,
   boatPos,
   aqualinkSites,
+  vessels,
+  eezPositions,
 }: {
   activeLayers: string[];
   boatPos: [number, number];
   aqualinkSites: AqualinkSite[];
+  vessels: AIVessel[];
+  eezPositions: [number, number][][];
 }) {
   return (
     <>
@@ -241,6 +255,66 @@ function MapLayers({
         </>
       )}
 
+      {/* INCOIS PFZ / Chlorophyll WMS Layer */}
+      {activeLayers.includes("incois") && (
+        <TileLayer
+          url="https://iioe-2.incois.gov.in/geoserver/wms?service=WMS&version=1.1.1&request=GetMap&layers=incois:nrta_chlorophyll&styles=&bbox=-90,-180,90,180&width=256&height=256&srs=EPSG:4326&format=image/png&transparent=true"
+          opacity={0.45}
+          attribution='&copy; INCOIS'
+        />
+      )}
+
+      {/* Maritime EEZ Boundaries (from MarineRegions) */}
+      {activeLayers.includes("imbl") && eezPositions.length > 0 &&
+        eezPositions.map((positions, i) => (
+          <Polyline
+            key={`eez-live-${i}`}
+            positions={positions}
+            pathOptions={{
+              color: "#EF4444",
+              weight: 1.5,
+              dashArray: "6, 4",
+              opacity: 0.5,
+            }}
+          />
+        ))}
+
+      {/* Live Vessel Traffic (AIS) */}
+      {activeLayers.includes("vessels") &&
+        vessels.map((vessel) => (
+          <CircleMarker
+            key={`v-${vessel.mmsi}`}
+            center={[vessel.lat, vessel.lng]}
+            radius={getVesselRadius(vessel.status)}
+            pathOptions={{
+              fillColor: getVesselColor(vessel.vesselType),
+              fillOpacity: 0.8,
+              color: getVesselColor(vessel.vesselType),
+              weight: 1.5,
+              opacity: 0.9,
+            }}
+          >
+            <Tooltip>
+              <span className="text-xs font-medium">
+                {vessel.name} | {vessel.speed} kn | {vessel.heading}°
+              </span>
+            </Tooltip>
+            <Popup>
+              <div style={{ background: "#0A1628", color: "white", padding: "10px", borderRadius: "8px", minWidth: 160 }}>
+                <div style={{ fontWeight: 700, fontSize: "12px", marginBottom: 4 }}>{vessel.name}</div>
+                <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.4)", marginBottom: 6 }}>MMSI: {vessel.mmsi}</div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4 }}>
+                  <div><span style={{ fontSize: "9px", color: "rgba(255,255,255,0.35)", textTransform: "uppercase" as const }}>Speed</span><div style={{ fontSize: "13px", fontWeight: 700, color: getVesselColor(vessel.vesselType) }}>{vessel.speed} kn</div></div>
+                  <div><span style={{ fontSize: "9px", color: "rgba(255,255,255,0.35)", textTransform: "uppercase" as const }}>Heading</span><div style={{ fontSize: "13px", fontWeight: 700 }}>{vessel.heading}°</div></div>
+                </div>
+                <div style={{ marginTop: 6, fontSize: "10px" }}><span style={{ color: "rgba(255,255,255,0.35)", marginRight: 4 }}>Type:</span><span style={{ color: getVesselColor(vessel.vesselType) }}>{vessel.vesselType}</span></div>
+                <div style={{ fontSize: "10px" }}><span style={{ color: "rgba(255,255,255,0.35)", marginRight: 4 }}>Status:</span>{vessel.status}</div>
+                <div style={{ fontSize: "10px" }}><span style={{ color: "rgba(255,255,255,0.35)", marginRight: 4 }}>Dest:</span>{vessel.destination}</div>
+              </div>
+            </Popup>
+          </CircleMarker>
+        ))}
+
       {/* Safe Route */}
       <Polyline
         positions={SAFE_ROUTE}
@@ -311,6 +385,9 @@ export default function CommandCenter() {
   const [aqualinkSites, setAqualinkSites] = useState<AqualinkSite[]>([]);
   const [basemap, setBasemap] = useState<BasemapId>("dark");
   const [flyTarget, setFlyTarget] = useState<{ center: [number, number]; zoom: number } | null>(null);
+  const [marineData, setMarineData] = useState<MarineConditions | null>(null);
+  const [vessels, setVessels] = useState<AIVessel[]>([]);
+  const [eezFeature, setEezFeature] = useState<EEZFeature | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -322,6 +399,21 @@ export default function CommandCenter() {
     fetchAqualinkSites().then((sites) => {
       setAqualinkSites(sites);
     });
+  }, []);
+
+  // Fetch live marine conditions from Open-Meteo
+  useEffect(() => {
+    fetchMarineConditions(MAP_CENTER[0], MAP_CENTER[1]).then(setMarineData);
+  }, []);
+
+  // Generate mock vessel traffic around map center
+  useEffect(() => {
+    setVessels(generateMockVessels(MAP_CENTER[0], MAP_CENTER[1], 18, 8));
+  }, []);
+
+  // Fetch EEZ boundary from MarineRegions
+  useEffect(() => {
+    fetchEEZGeometry().then(setEezFeature);
   }, []);
 
   const toggleLayer = useCallback((id: string) => {
@@ -612,6 +704,8 @@ export default function CommandCenter() {
             activeLayers={activeLayers}
             boatPos={[USER_BOAT.lat, USER_BOAT.lng]}
             aqualinkSites={aqualinkSites}
+            vessels={vessels}
+            eezPositions={eezFeature ? geojsonToLeafletPositions(eezFeature.geometry) : []}
           />
         </MapContainer>
 
@@ -697,6 +791,43 @@ export default function CommandCenter() {
       {/* ═══ RIGHT SIDEBAR: Analytics ═══ */}
       <div className="w-[300px] flex-shrink-0 border-l border-slate-700/30 bg-[#061424] flex flex-col overflow-hidden">
         <ScrollArea className="flex-1">
+          {/* Live Marine Telemetry (Open-Meteo) */}
+          <div className="p-3 border-b border-white/[0.06]">
+            <div className="flex items-center gap-2 mb-3">
+              <Waves className="size-3.5 text-[#00D2FF]" />
+              <span className="text-xs font-bold text-white">Live Ocean Telemetry</span>
+            </div>
+            {marineData ? (
+              <div className="grid grid-cols-2 gap-2">
+                <div className="rounded-lg border border-blue-500/20 bg-blue-500/5 p-2">
+                  <div className="text-[9px] text-white/40 uppercase tracking-wider">Wave Height</div>
+                  <div className="text-sm font-bold text-white">{marineData.waveHeight?.toFixed(1) ?? "—"}<span className="text-[10px] text-white/40">m</span></div>
+                </div>
+                <div className="rounded-lg border border-cyan-500/20 bg-cyan-500/5 p-2">
+                  <div className="text-[9px] text-white/40 uppercase tracking-wider">Current</div>
+                  <div className="text-sm font-bold text-white">{marineData.oceanCurrentVelocity?.toFixed(1) ?? "—"}<span className="text-[10px] text-white/40">m/s</span></div>
+                </div>
+                <div className="rounded-lg border border-orange-500/20 bg-orange-500/5 p-2">
+                  <div className="text-[9px] text-white/40 uppercase tracking-wider">SST</div>
+                  <div className="text-sm font-bold text-white">{marineData.seaSurfaceTemperature?.toFixed(1) ?? "—"}<span className="text-[10px] text-white/40">°C</span></div>
+                </div>
+                <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-2">
+                  <div className="text-[9px] text-white/40 uppercase tracking-wider">Swell</div>
+                  <div className="text-sm font-bold text-white">{marineData.swellWaveHeight?.toFixed(1) ?? "—"}<span className="text-[10px] text-white/40">m</span></div>
+                </div>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 text-[10px] text-white/30">
+                <Loader2 className="size-3 animate-spin" />
+                <span>Fetching marine data...</span>
+              </div>
+            )}
+            <div className="mt-2 flex items-center gap-1.5 text-[9px] text-white/25">
+              <Radio className="size-2.5" />
+              <span>Source: Open-Meteo Marine API • {vessels.length} vessels tracked</span>
+            </div>
+          </div>
+
           {/* Weather Alerts */}
           <div className="p-3 border-b border-white/[0.06]">
             <div className="flex items-center gap-2 mb-3">
