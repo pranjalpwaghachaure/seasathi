@@ -108,9 +108,9 @@ export type BasemapId = "dark" | "satellite" | "nautical";
 
 export const BASEMAP_TILES: Record<BasemapId, { label: string; url: string; emoji: string }> = {
   dark: {
-    label: "Dark Matter Global",
+    label: "Dark Gray Canvas",
     emoji: "🌌",
-    url: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager_labels_under/{z}/{x}/{y}{r}.png",
+    url: "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",
   },
   satellite: {
     label: "Global Satellite View",

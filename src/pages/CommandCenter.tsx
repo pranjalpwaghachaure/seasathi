@@ -73,6 +73,15 @@ import {
   type BasemapId,
 } from "@/lib/mockData";
 
+/* ── Safe coordinate helpers ─────────────── */
+const SAFE_HARBOR: [number, number] = [17.6868, 83.2185];
+function isValidLat(val: unknown): val is number {
+  return typeof val === "number" && Number.isFinite(val) && val >= -90 && val <= 90;
+}
+function isValidLng(val: unknown): val is number {
+  return typeof val === "number" && Number.isFinite(val) && val >= -180 && val <= 180;
+}
+
 /* ── Map Layers Component ──────────────────── */
 function MapLayers({
   activeLayers,
@@ -87,6 +96,10 @@ function MapLayers({
   vessels: AIVessel[];
   eezPositions: [number, number][][];
 }) {
+  const safeBoatPos: [number, number] = [
+    isValidLat(boatPos[0]) ? boatPos[0] : SAFE_HARBOR[0],
+    isValidLng(boatPos[1]) ? boatPos[1] : SAFE_HARBOR[1],
+  ];
   return (
     <>
       {/* SST Heatmap */}
@@ -282,7 +295,7 @@ function MapLayers({
 
       {/* Live Vessel Traffic (AIS) */}
       {activeLayers.includes("vessels") &&
-        vessels.map((vessel) => (
+        vessels.filter((v) => isValidLat(v.lat) && isValidLng(v.lng)).map((vessel) => (
           <CircleMarker
             key={`v-${vessel.mmsi}`}
             center={[vessel.lat, vessel.lng]}
@@ -329,7 +342,7 @@ function MapLayers({
 
       {/* Boat */}
       <CircleMarker
-        center={boatPos}
+        center={safeBoatPos}
         radius={12}
         pathOptions={{
           fillColor: "#38bdf8",
@@ -340,7 +353,7 @@ function MapLayers({
         }}
       />
       <CircleMarker
-        center={boatPos}
+        center={safeBoatPos}
         radius={6}
         pathOptions={{
           fillColor: "#38bdf8",
@@ -704,7 +717,10 @@ export default function CommandCenter() {
           {flyTarget && <FlyToPreset center={flyTarget.center} zoom={flyTarget.zoom} />}
           <MapLayers
             activeLayers={activeLayers}
-            boatPos={[USER_BOAT.lat, USER_BOAT.lng]}
+            boatPos={[
+              isValidLat(USER_BOAT.lat) ? USER_BOAT.lat : SAFE_HARBOR[0],
+              isValidLng(USER_BOAT.lng) ? USER_BOAT.lng : SAFE_HARBOR[1],
+            ]}
             aqualinkSites={aqualinkSites}
             vessels={vessels}
             eezPositions={eezFeature ? geojsonToLeafletPositions(eezFeature.geometry) : []}

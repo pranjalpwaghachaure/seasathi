@@ -63,10 +63,11 @@ type MobileTab = "map" | "voice" | "weather" | "sos";
 
 /* ── Boat Tracker (reacts to state) ────────── */
 function BoatTracker({ boat }: { boat: UserBoat }) {
+  const pos = safeBoatPosition(boat);
   return (
     <>
       <CircleMarker
-        center={[boat.lat, boat.lng]}
+        center={pos}
         radius={16}
         pathOptions={{
           fillColor: "#38bdf8",
@@ -83,7 +84,7 @@ function BoatTracker({ boat }: { boat: UserBoat }) {
         </Popup>
       </CircleMarker>
       <CircleMarker
-        center={[boat.lat, boat.lng]}
+        center={pos}
         radius={7}
         pathOptions={{
           fillColor: "#38bdf8",
@@ -124,6 +125,21 @@ function FlyToPreset({ center, zoom }: { center: [number, number]; zoom: number 
 
 import FishermenChatbot from "@/components/seasathi/FishermenChatbot";
 import IMBLAlertBanner from "@/components/seasathi/IMBLAlertBanner";
+
+/* ── Safe coordinates helper ────────────────── */
+const SAFE_HARBOR: [number, number] = [17.6868, 83.2185];
+function safeCoord(val: number | undefined, fallback: number): number {
+  return Number.isFinite(val) ? (val as number) : fallback;
+}
+function safeBoatPosition(b: UserBoat): [number, number] {
+  return [safeCoord(b.lat, SAFE_HARBOR[0]), safeCoord(b.lng, SAFE_HARBOR[1])];
+}
+function isValidLat(val: unknown): val is number {
+  return typeof val === "number" && Number.isFinite(val) && val >= -90 && val <= 90;
+}
+function isValidLng(val: unknown): val is number {
+  return typeof val === "number" && Number.isFinite(val) && val >= -180 && val <= 180;
+}
 
 /* ── Main Fishermen Mode PWA Component ─────── */
 export default function FishermenMode({ language = "en" }: { language?: string }) {
@@ -311,16 +327,16 @@ export default function FishermenMode({ language = "en" }: { language?: string }
                 maxZoom={18}
               >
                 <TileLayer
-                  url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager_labels_under/{z}/{x}/{y}{r}.png"
+                  url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}"
                   attribution='&copy; OpenStreetMap contributors'
                 />
-                <MapInvalidator center={[boat.lat, boat.lng]} />
+                <MapInvalidator center={safeBoatPosition(boat)} />
                 {flyTarget && (
                   <FlyToPreset center={flyTarget.center} zoom={flyTarget.zoom} />
                 )}
 
                 {/* Safe Fishing Zones */}
-                {FISHING_ZONES.map((zone) => (
+                {FISHING_ZONES.filter((z) => isValidLat(z.lat) && isValidLng(z.lng)).map((zone) => (
                   <CircleMarker
                     key={zone.id}
                     center={[zone.lat, zone.lng]}
@@ -362,29 +378,47 @@ export default function FishermenMode({ language = "en" }: { language?: string }
                   const color = getSstColor(temp);
                   const alert = hasAlert(site);
                   return (
-                    <CircleMarker
-                      key={`aq-${site.id}`}
-                      center={coords}
-                      radius={5}
-                      pathOptions={{
-                        fillColor: color,
-                        fillOpacity: 0.85,
-                        color: color,
-                        weight: 2,
-                        opacity: 0.9,
-                      }}
-                    >
-                      <Popup>
-                        <strong>{site.name}</strong>
-                        <br />
-                        SST: {temp.toFixed(1)}°C {alert ? "⚠️" : ""}
-                      </Popup>
-                    </CircleMarker>
+                    <>
+                      {/* Pulsing glow ring for alert buoys */}
+                      {alert && (
+                        <CircleMarker
+                          key={`aq-glow-${site.id}`}
+                          center={coords}
+                          radius={10}
+                          className="glow-cyan-400"
+                          pathOptions={{
+                            fillColor: "transparent",
+                            fillOpacity: 0,
+                            color: "#22d3ee",
+                            weight: 1.5,
+                            opacity: 0.5,
+                          }}
+                        />
+                      )}
+                      <CircleMarker
+                        key={`aq-${site.id}`}
+                        center={coords}
+                        radius={5}
+                        pathOptions={{
+                          fillColor: color,
+                          fillOpacity: 0.85,
+                          color: color,
+                          weight: 2,
+                          opacity: 0.9,
+                        }}
+                      >
+                        <Popup>
+                          <strong>{site.name}</strong>
+                          <br />
+                          SST: {temp.toFixed(1)}°C {alert ? "⚠️" : ""}
+                        </Popup>
+                      </CircleMarker>
+                    </>
                   );
                 })}
 
                 {/* Safe Fishing Points */}
-                {SAFE_FISHING_POINTS.map((point, i) => (
+                {SAFE_FISHING_POINTS.filter((p) => isValidLat(p[0]) && isValidLng(p[1])).map((point, i) => (
                   <CircleMarker
                     key={`sf-${i}`}
                     center={point}
@@ -399,7 +433,7 @@ export default function FishermenMode({ language = "en" }: { language?: string }
                 ))}
 
                 {/* Live Vessel Traffic */}
-                {vessels.map((v) => (
+                {vessels.filter((v) => isValidLat(v.lat) && isValidLng(v.lng)).map((v) => (
                   <CircleMarker
                     key={`v-${v.mmsi}`}
                     center={[v.lat, v.lng]}
