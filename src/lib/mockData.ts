@@ -108,17 +108,17 @@ export type BasemapId = "dark" | "satellite" | "nautical";
 
 export const BASEMAP_TILES: Record<BasemapId, { label: string; url: string; emoji: string }> = {
   dark: {
-    label: "Dark Gray Canvas",
-    emoji: "🌌",
-    url: "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",
+    label: "OpenStreetMap",
+    emoji: "🌐",
+    url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
   },
   satellite: {
-    label: "Global Satellite View",
+    label: "OpenStreetMap",
     emoji: "🛰️",
-    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
   },
   nautical: {
-    label: "INCOIS Nautical Style",
+    label: "OpenStreetMap",
     emoji: "🌊",
     url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
   },
