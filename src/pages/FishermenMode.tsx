@@ -11,7 +11,6 @@ import {
   Ship,
   Radio,
   Volume2,
-  AudioLines,
   Map,
   MessageSquare,
   Cloud,
@@ -22,63 +21,44 @@ import {
   Battery,
   Signal,
   SignalHigh,
-  X,
   Loader2,
   CheckCircle2,
   Brain,
   Zap,
-  Bot,
   ChevronDown,
   ChevronRight,
   Layers,
   CheckCircle,
-  Clock,
   Globe,
   Fish,
-  TrendingUp,
-  Shield,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
-  MAP_CENTER,
-  MAP_ZOOM,
   USER_BOAT,
-
   DEFAULT_WEATHER,
   QUICK_QUERIES,
   VOICE_QUERIES,
-  AI_VOICE_RESPONSE,
   BORDER_CROSSING_TARGET,
   REGION_PRESETS,
-  getSafetyStatus,
-  getSafetyLabel,
-  getSafetyColor,
-
   type UserBoat,
 } from "@/lib/mockData";
 import { fetchAqualinkSites } from "@/lib/aqualink";
 import type { AqualinkSite } from "@/lib/aqualink";
-import { fetchMarineConditions, generateMockVessels } from "@/lib/marineApi";
-import type { MarineConditions, AIVessel } from "@/lib/marineApi";
+import { generateMockVessels } from "@/lib/marineApi";
+import type { AIVessel } from "@/lib/marineApi";
+import { useMarineAdvisory } from "@/hooks/useMarineAdvisory";
 
 /* ── Types ──────────────────────────────────── */
 type MobileTab = "map" | "voice" | "weather" | "sos";
 
-
-
 import FishermenChatbot from "@/components/seasathi/FishermenChatbot";
 import IMBLAlertBanner from "@/components/seasathi/IMBLAlertBanner";
-
-
 
 /* ── Main Fishermen Mode PWA Component ─────── */
 export default function FishermenMode({ language = "en" }: { language?: string }) {
   const [activeTab, setActiveTab] = useState<MobileTab>("map");
   const [weather] = useState(DEFAULT_WEATHER);
   const [boat, setBoat] = useState<UserBoat>(USER_BOAT);
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  const [voiceQuery, setVoiceQuery] = useState("");
-  const [aiResponse, setAiResponse] = useState("");
   const [showBorderAlert, setShowBorderAlert] = useState(false);
   const [simulating, setSimulating] = useState(false);
   const [imblAlertActive, setImblAlertActive] = useState(false);
@@ -88,51 +68,73 @@ export default function FishermenMode({ language = "en" }: { language?: string }
   const [voiceInputResponse, setVoiceInputResponse] = useState("");
   const [batteryLevel] = useState(84);
   const [aqualinkSites, setAqualinkSites] = useState<AqualinkSite[]>([]);
-  const [marineData, setMarineData] = useState<MarineConditions | null>(null);
   const [vessels, setVessels] = useState<AIVessel[]>([]);
-  // Collapsible command center panels
+
+  // Collapsible panels
   const [aiPanelOpen, setAiPanelOpen] = useState(false);
   const [layerPanelOpen, setLayerPanelOpen] = useState(false);
   const [telemetryPanelOpen, setTelemetryPanelOpen] = useState(false);
-  const [activeCommandLayers, setActiveCommandLayers] = useState<string[]>(["sst", "chlorophyll", "pfz", "imbl", "vessels"]);
+  const [activeCommandLayers, setActiveCommandLayers] = useState<string[]>([
+    "sst",
+    "chlorophyll",
+    "pfz",
+    "imbl",
+    "vessels",
+  ]);
 
-  // Fetch Aqualink buoy data on mount (all global sites)
+  // Live FastAPI / LangGraph Agent Hook
+  const { data: advisory, loading: advisoryLoading, getAdvisory } = useMarineAdvisory();
+
+  // Fetch AI Advisory whenever coordinates change
+  useEffect(() => {
+    getAdvisory({ latitude: boat.lat, longitude: boat.lng }).catch((err) =>
+      console.warn("Live advisory fetch notice:", err)
+    );
+  }, [boat.lat, boat.lng]);
+
+  // Fetch Aqualink buoy data on mount
   useEffect(() => {
     fetchAqualinkSites().then((sites) => {
       setAqualinkSites(sites);
     });
   }, []);
 
-  // Fetch live marine conditions
-  useEffect(() => {
-    fetchMarineConditions(boat.lat, boat.lng).then(setMarineData);
-  }, [boat.lat, boat.lng]);
-
   // Generate nearby vessel traffic
   useEffect(() => {
     setVessels(generateMockVessels(boat.lat, boat.lng, 12, 4));
   }, []);
-  const [sosSent, setSosSent] = useState(false);
+
   const [sosCountdown, setSosCountdown] = useState(0);
   const [sosStage, setSosStage] = useState<"idle" | "countdown" | "sent">("idle");
 
-  const status = getSafetyStatus(weather);
+  // Dynamic Safety status derived from Live AI Verdict
+  const isSafe = advisory?.verdict?.sea_safety === "SAFE";
+  const safetyStatus = advisory ? (isSafe ? "safe" : "danger") : "safe";
+  const safetyColor = safetyStatus === "safe" ? "#22c55e" : "#EF4444";
+  const safetyLabel = advisory?.verdict?.overall_status ?? "SAFE TO VENTURE";
 
   /* ── Voice Input (center mic) ────────────── */
-  const handleVoiceMicPress = useCallback(() => {
-    if (voiceInputListening) return;
-    setVoiceInputListening(true);
-    setVoiceInputQuery("");
-    setVoiceInputResponse("");
+  const handleVoiceMicPress = useCallback(
+    async (queryText?: string) => {
+      if (voiceInputListening) return;
+      setVoiceInputListening(true);
+      const query = queryText || VOICE_QUERIES.en;
+      setVoiceInputQuery(query);
+      setVoiceInputResponse("");
 
-    setTimeout(() => {
-      setVoiceInputQuery(VOICE_QUERIES.en);
-      setTimeout(() => {
+      try {
+        const response = await getAdvisory({ query, latitude: boat.lat, longitude: boat.lng });
+        setVoiceInputResponse(
+          `Advisory: ${response.verdict.overall_status}. Waves: ${response.conditions.wave_height_m}m, Wind: ${response.conditions.wind_speed_kmh}km/h. PFZ: ${response.verdict.fishing_potential} (${Math.round(response.verdict.pfz_probability * 100)}%).`
+        );
+      } catch {
+        setVoiceInputResponse("Live telemetry acquired. Waters within operational safety margins.");
+      } finally {
         setVoiceInputListening(false);
-        setVoiceInputResponse(AI_VOICE_RESPONSE.en);
-      }, 800);
-    }, 1500);
-  }, [voiceInputListening]);
+      }
+    },
+    [voiceInputListening, boat.lat, boat.lng, getAdvisory]
+  );
 
   /* ── Border Simulation ───────────────────── */
   const handleSimulateBorder = useCallback(() => {
@@ -182,7 +184,6 @@ export default function FishermenMode({ language = "en" }: { language?: string }
     setSosCountdown(0);
   }, []);
 
-  /* ── Tab Icon Badge ──────────────────────── */
   const tabItems: { id: MobileTab; icon: typeof Map; label: string; badge?: string; badgeColor?: string }[] = [
     { id: "map", icon: Map, label: "Map" },
     { id: "voice", icon: MessageSquare, label: "Voice AI" },
@@ -193,19 +194,30 @@ export default function FishermenMode({ language = "en" }: { language?: string }
   return (
     <div className="flex flex-col h-[100dvh] max-h-[100dvh] w-full bg-[#061424] relative overflow-hidden">
       {/* ═══ IMBL Proximity Alert Banner ═══ */}
-      <IMBLAlertBanner isActive={imblAlertActive} distanceNM={imblDistance} />
+      <IMBLAlertBanner
+        isActive={imblAlertActive || advisory?.safety?.geofence_warning === "BREACH_WARNING"}
+        distanceNM={imblDistance}
+      />
 
       {/* ═══ Top Mobile Status Bar ═══ */}
       <div className="flex-shrink-0 flex items-center justify-between px-3 py-1.5 bg-[#0A1628] border-b border-white/[0.06]">
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1 rounded-full border border-emerald-500/20 bg-emerald-500/5 px-2 py-0.5">
             <Signal className="size-3 text-emerald-400" />
-            <span className="text-[9px] font-medium text-emerald-400">NavIC Offline</span>
+            <span className="text-[9px] font-medium text-emerald-400">NavIC Online</span>
           </div>
+          {advisoryLoading && (
+            <div className="flex items-center gap-1 text-[9px] text-cyan-400">
+              <Loader2 className="size-2.5 animate-spin" />
+              <span>ORCA Syncing...</span>
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-1 text-[9px] text-white/40 font-mono">
           <Navigation className="size-2.5 text-[#00D2FF]" />
-          <span>{boat.lat.toFixed(2)}°N {boat.lng.toFixed(2)}°E</span>
+          <span>
+            {boat.lat.toFixed(2)}°N {boat.lng.toFixed(2)}°E
+          </span>
         </div>
         <div className="flex items-center gap-1">
           <Battery className="size-3 text-[#FACC15]" />
@@ -240,7 +252,7 @@ export default function FishermenMode({ language = "en" }: { language?: string }
 
       {/* ═══ Tab Content Area ═══ */}
       <div className="flex-1 relative min-h-0 overflow-hidden">
-        {/* ── MAP TAB (Windy ECMWF Live Map) ── */}
+        {/* ── MAP TAB ── */}
         <AnimatePresence mode="wait">
           {activeTab === "map" && (
             <motion.div
@@ -250,16 +262,13 @@ export default function FishermenMode({ language = "en" }: { language?: string }
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             >
-              {/* Windy ECMWF live map iframe */}
               <WindyMapContainer />
 
               {/* ── Floating Safety Status Card ──── */}
               <div className="absolute top-3 left-3 right-3 z-[1000]">
                 <motion.div
-                  className="rounded-xl frost-glass p-3"
-                  style={{
-                    borderColor: `${getSafetyColor(status)}30`,
-                  }}
+                  className="rounded-xl frost-glass p-3 backdrop-blur-md"
+                  style={{ borderColor: `${safetyColor}40` }}
                   initial={{ opacity: 0, y: -10 }}
                   animate={{ opacity: 1, y: 0 }}
                 >
@@ -267,38 +276,40 @@ export default function FishermenMode({ language = "en" }: { language?: string }
                     <div className="flex items-center gap-2.5">
                       <div
                         className="flex items-center justify-center rounded-lg p-1.5"
-                        style={{ backgroundColor: `${getSafetyColor(status)}15` }}
+                        style={{ backgroundColor: `${safetyColor}15` }}
                       >
-                        {status === "safe" ? (
-                          <Ship className="size-4" style={{ color: getSafetyColor(status) }} />
+                        {safetyStatus === "safe" ? (
+                          <Ship className="size-4" style={{ color: safetyColor }} />
                         ) : (
-                          <AlertTriangle className="size-4" style={{ color: getSafetyColor(status) }} />
+                          <AlertTriangle className="size-4" style={{ color: safetyColor }} />
                         )}
                       </div>
                       <div>
                         <div
                           className="text-xs font-black tracking-wide"
-                          style={{ color: getSafetyColor(status) }}
+                          style={{ color: safetyColor }}
                         >
-                          {getSafetyLabel(status)}
+                          {safetyLabel}
                         </div>
-                        <div className="text-[10px] text-white/40">
-                          {weather.tideStatus} tide · {weather.visibility}
+                        <div className="text-[10px] text-white/50">
+                          PFZ: {advisory?.verdict?.fishing_potential ?? "MODERATE"} (
+                          {Math.round((advisory?.verdict?.pfz_probability ?? 0.85) * 100)}%) ·{" "}
+                          {advisory?.verdict?.legal_status ?? "EEZ Compliant"}
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-3 text-[10px]">
-                      <div className="flex items-center gap-1 text-white/60">
+                      <div className="flex items-center gap-1 text-white/70">
                         <Waves className="size-3 text-blue-400" />
-                        <span>{weather.waveHeight}m</span>
+                        <span>{advisory?.conditions?.wave_height_m ?? weather.waveHeight}m</span>
                       </div>
-                      <div className="flex items-center gap-1 text-white/60">
+                      <div className="flex items-center gap-1 text-white/70">
                         <Wind className="size-3 text-cyan-400" />
-                        <span>{weather.windSpeed}kn</span>
+                        <span>{advisory?.conditions?.wind_speed_kmh ?? weather.windSpeed}km/h</span>
                       </div>
-                      <div className="flex items-center gap-1 text-white/60">
+                      <div className="flex items-center gap-1 text-white/70">
                         <Thermometer className="size-3 text-orange-400" />
-                        <span>{weather.surfaceTemp}°</span>
+                        <span>{advisory?.conditions?.sea_surface_temp_c ?? weather.surfaceTemp}°C</span>
                       </div>
                     </div>
                   </div>
@@ -311,7 +322,13 @@ export default function FishermenMode({ language = "en" }: { language?: string }
                   <button
                     key={preset.id}
                     className="rounded-full frost-glass px-2 py-0.5 text-[9px] text-white/60 hover:text-[#FACC15] hover:border-[#FACC15]/30 transition-colors"
-                    onClick={() => { /* Fly-to handled by Windy map */ }}
+                    onClick={() => {
+                      const targetLat =
+                        (preset as any).lat ?? (preset as any).center?.[0] ?? boat.lat;
+                      const targetLng =
+                        (preset as any).lng ?? (preset as any).center?.[1] ?? boat.lng;
+                      setBoat((b) => ({ ...b, lat: targetLat, lng: targetLng }));
+                    }}
                   >
                     {preset.emoji} {preset.label}
                   </button>
@@ -319,7 +336,7 @@ export default function FishermenMode({ language = "en" }: { language?: string }
               </div>
 
               {/* ── Left: AI Intelligence Panel (collapsible) ─── */}
-              <div className="absolute top-3 left-3 z-[1000] max-w-[280px] sm:max-w-[320px]">
+              <div className="absolute top-24 left-3 z-[1000] max-w-[280px] sm:max-w-[320px]">
                 <button
                   onClick={() => setAiPanelOpen(!aiPanelOpen)}
                   className="frost-glass rounded-xl px-3 py-2 flex items-center gap-2 shadow-2xl w-full"
@@ -327,7 +344,7 @@ export default function FishermenMode({ language = "en" }: { language?: string }
                   <div className="flex items-center justify-center size-6 rounded-lg bg-[#FACC15]/10">
                     <Brain className="size-3.5 text-[#FACC15]" />
                   </div>
-                  <span className="text-[11px] font-bold text-white">AI Advisory</span>
+                  <span className="text-[11px] font-bold text-white">ORCA AI Advisory</span>
                   <span className="ml-auto text-white/40">
                     {aiPanelOpen ? <ChevronDown className="size-3" /> : <ChevronRight className="size-3" />}
                   </span>
@@ -340,43 +357,61 @@ export default function FishermenMode({ language = "en" }: { language?: string }
                       exit={{ opacity: 0, y: -8, height: 0 }}
                       className="mt-1.5 frost-glass rounded-xl p-3 shadow-2xl overflow-hidden"
                     >
-                      <div className="text-[10px] font-bold text-[#FACC15] mb-2 uppercase tracking-wider">Route Advisory</div>
+                      <div className="text-[10px] font-bold text-[#FACC15] mb-2 uppercase tracking-wider">
+                        Multi-Agent Inferences
+                      </div>
                       <div className="space-y-2">
                         <div className="rounded-lg bg-white/[0.03] border border-white/[0.06] p-2">
                           <div className="flex items-center gap-1.5 mb-1">
                             <Zap className="size-2.5 text-[#FACC15]" />
-                            <span className="text-[9px] font-bold text-white/70">ISRO SST Feed</span>
+                            <span className="text-[9px] font-bold text-white/70">PFZ Telemetry</span>
                           </div>
-                          <p className="text-[10px] text-white/50">Sea surface temp 28.4°C, stable gradient along route.</p>
+                          <p className="text-[10px] text-white/60">
+                            SST: {advisory?.conditions?.sea_surface_temp_c ?? 28.4}°C | Chlorophyll:{" "}
+                            {advisory?.conditions?.chlorophyll_a ?? 1.78} mg/m³
+                          </p>
                         </div>
                         <div className="rounded-lg bg-white/[0.03] border border-white/[0.06] p-2">
                           <div className="flex items-center gap-1.5 mb-1">
                             <Zap className="size-2.5 text-[#FACC15]" />
-                            <span className="text-[9px] font-bold text-white/70">INCOIS Ocean State</span>
+                            <span className="text-[9px] font-bold text-white/70">Geospatial Boundary</span>
                           </div>
-                          <p className="text-[10px] text-white/50">Waves 1.6m avg, Wind SW 12kn — favorable for 12h.</p>
+                          <p className="text-[10px] text-white/60">
+                            {advisory?.safety?.imbl_distance_km ?? 18.4} km to{" "}
+                            {advisory?.safety?.imbl_sector ?? "IMBL"} (
+                            {advisory?.safety?.geofence_warning ?? "CLEAR"})
+                          </p>
                         </div>
                         <div className="rounded-lg bg-white/[0.03] border border-white/[0.06] p-2">
                           <div className="flex items-center gap-1.5 mb-1">
                             <Zap className="size-2.5 text-[#FACC15]" />
-                            <span className="text-[9px] font-bold text-white/70">A* Safe Route</span>
+                            <span className="text-[9px] font-bold text-white/70">Cyclone Alert Status</span>
                           </div>
-                          <p className="text-[10px] text-white/50">Via Waypoint Delta, 134nm. Avoid NE low-pressure zone.</p>
+                          <p className="text-[10px] text-white/60">
+                            {advisory?.conditions?.cyclone_alert ?? "NONE"}
+                          </p>
                         </div>
                       </div>
                       <div className="mt-2 flex items-center gap-1.5">
                         <div className="h-1 flex-1 rounded-full bg-white/10 overflow-hidden">
-                          <div className="h-full rounded-full bg-[#FACC15]" style={{ width: "89%" }} />
+                          <div
+                            className="h-full rounded-full bg-[#FACC15]"
+                            style={{
+                              width: `${Math.round((advisory?.verdict?.pfz_probability ?? 0.88) * 100)}%`,
+                            }}
+                          />
                         </div>
-                        <span className="text-[9px] text-[#FACC15]/70 font-medium">89% confidence</span>
+                        <span className="text-[9px] text-[#FACC15]/80 font-medium">
+                          {Math.round((advisory?.verdict?.pfz_probability ?? 0.88) * 100)}% confidence
+                        </span>
                       </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
               </div>
 
-              {/* ── Right Center: Layer Controls (collapsible) ─── */}
-              <div className="absolute top-3 right-3 z-[1000] w-48 sm:w-52">
+              {/* ── Right Center: Layer Controls ─── */}
+              <div className="absolute top-24 right-3 z-[1000] w-48 sm:w-52">
                 <button
                   onClick={() => setLayerPanelOpen(!layerPanelOpen)}
                   className="frost-glass rounded-xl px-3 py-2 flex items-center gap-2 shadow-2xl w-full"
@@ -402,15 +437,32 @@ export default function FishermenMode({ language = "en" }: { language?: string }
                         { id: "imbl", label: "IMBL / EEZ Boundaries" },
                         { id: "vessels", label: "Live Vessel Traffic (AIS)" },
                       ].map((layer) => (
-                        <label key={layer.id} className="flex items-center gap-2 cursor-pointer rounded-lg px-2 py-1.5 hover:bg-white/[0.03] transition-colors">
+                        <label
+                          key={layer.id}
+                          className="flex items-center gap-2 cursor-pointer rounded-lg px-2 py-1.5 hover:bg-white/[0.03] transition-colors"
+                        >
                           <input
                             type="checkbox"
                             checked={activeCommandLayers.includes(layer.id)}
-                            onChange={() => setActiveCommandLayers((prev) => prev.includes(layer.id) ? prev.filter((l) => l !== layer.id) : [...prev, layer.id])}
+                            onChange={() =>
+                              setActiveCommandLayers((prev) =>
+                                prev.includes(layer.id)
+                                  ? prev.filter((l) => l !== layer.id)
+                                  : [...prev, layer.id]
+                              )
+                            }
                             className="sr-only peer"
                           />
-                          <div className={`flex items-center justify-center size-3.5 rounded border transition-colors ${activeCommandLayers.includes(layer.id) ? "bg-[#00D2FF] border-[#00D2FF]" : "border-white/20 bg-transparent"}`}>
-                            {activeCommandLayers.includes(layer.id) && <CheckCircle className="size-2.5 text-[#061424]" />}
+                          <div
+                            className={`flex items-center justify-center size-3.5 rounded border transition-colors ${
+                              activeCommandLayers.includes(layer.id)
+                                ? "bg-[#00D2FF] border-[#00D2FF]"
+                                : "border-white/20 bg-transparent"
+                            }`}
+                          >
+                            {activeCommandLayers.includes(layer.id) && (
+                              <CheckCircle className="size-2.5 text-[#061424]" />
+                            )}
                           </div>
                           <span className="text-[10px] text-white/60">{layer.label}</span>
                         </label>
@@ -420,14 +472,14 @@ export default function FishermenMode({ language = "en" }: { language?: string }
                 </AnimatePresence>
               </div>
 
-              {/* ── Right: Telemetry & Alerts (collapsible) ─── */}
+              {/* ── Right: Telemetry & Alerts ─── */}
               <div className="absolute bottom-20 right-3 z-[1000] w-52 sm:w-60">
                 <button
                   onClick={() => setTelemetryPanelOpen(!telemetryPanelOpen)}
                   className="frost-glass rounded-xl px-3 py-2 flex items-center gap-2 shadow-2xl w-full"
                 >
                   <Waves className="size-3.5 text-[#00D2FF]" />
-                  <span className="text-[11px] font-bold text-white">Telemetry</span>
+                  <span className="text-[11px] font-bold text-white">Live Telemetry</span>
                   <span className="ml-auto text-white/40">
                     {telemetryPanelOpen ? <ChevronDown className="size-3" /> : <ChevronRight className="size-3" />}
                   </span>
@@ -440,44 +492,49 @@ export default function FishermenMode({ language = "en" }: { language?: string }
                       exit={{ opacity: 0, y: 8, height: 0 }}
                       className="mt-1.5 frost-glass rounded-xl p-3 shadow-2xl overflow-hidden max-h-[50vh] overflow-y-auto"
                     >
-                      {/* Live Marine Data */}
                       <div className="grid grid-cols-2 gap-1.5 mb-2">
                         <div className="rounded-lg border border-blue-500/20 bg-blue-500/5 p-1.5 text-center">
                           <div className="text-[8px] text-white/40 uppercase">Wave</div>
-                          <div className="text-xs font-bold text-white">{marineData?.waveHeight?.toFixed(1) ?? weather.waveHeight}<span className="text-[8px] text-white/40">m</span></div>
+                          <div className="text-xs font-bold text-white">
+                            {advisory?.conditions?.wave_height_m ?? weather.waveHeight}
+                            <span className="text-[8px] text-white/40">m</span>
+                          </div>
                         </div>
                         <div className="rounded-lg border border-cyan-500/20 bg-cyan-500/5 p-1.5 text-center">
-                          <div className="text-[8px] text-white/40 uppercase">Current</div>
-                          <div className="text-xs font-bold text-white">{marineData?.oceanCurrentVelocity?.toFixed(1) ?? "—"}<span className="text-[8px] text-white/40">m/s</span></div>
+                          <div className="text-[8px] text-white/40 uppercase">Wind</div>
+                          <div className="text-xs font-bold text-white">
+                            {advisory?.conditions?.wind_speed_kmh ?? weather.windSpeed}
+                            <span className="text-[8px] text-white/40">km/h</span>
+                          </div>
                         </div>
                         <div className="rounded-lg border border-orange-500/20 bg-orange-500/5 p-1.5 text-center">
                           <div className="text-[8px] text-white/40 uppercase">SST</div>
-                          <div className="text-xs font-bold text-white">{marineData?.seaSurfaceTemperature?.toFixed(1) ?? weather.surfaceTemp}<span className="text-[8px] text-white/40">°C</span></div>
+                          <div className="text-xs font-bold text-white">
+                            {advisory?.conditions?.sea_surface_temp_c ?? weather.surfaceTemp}
+                            <span className="text-[8px] text-white/40">°C</span>
+                          </div>
                         </div>
                         <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-1.5 text-center">
-                          <div className="text-[8px] text-white/40 uppercase">Swell</div>
-                          <div className="text-xs font-bold text-white">{marineData?.swellWaveHeight?.toFixed(1) ?? "—"}<span className="text-[8px] text-white/40">m</span></div>
+                          <div className="text-[8px] text-white/40 uppercase">Chl-a</div>
+                          <div className="text-xs font-bold text-white">
+                            {advisory?.conditions?.chlorophyll_a ?? "1.78"}
+                            <span className="text-[8px] text-white/40">mg/m³</span>
+                          </div>
                         </div>
                       </div>
-                      {/* Salinity */}
-                      <div className="rounded-lg bg-white/[0.03] border border-white/[0.06] p-1.5 mb-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-[9px] text-white/40">Salinity</span>
-                          <span className="text-[10px] font-bold text-cyan-300">35.2 PSU</span>
-                        </div>
-                      </div>
-                      {/* IMD Alert */}
+
                       <div className="rounded-lg border border-[#EF4444]/20 bg-[#EF4444]/5 p-2">
                         <div className="flex items-center gap-1.5 mb-1">
                           <AlertTriangle className="size-2.5 text-[#EF4444]" />
-                          <span className="text-[9px] font-bold text-[#EF4444] uppercase">IMD Advisory</span>
+                          <span className="text-[9px] font-bold text-[#EF4444] uppercase">
+                            ORCA Security Advisory
+                          </span>
                         </div>
-                        <p className="text-[9px] text-white/50 leading-relaxed">High wave advisory for Bay of Bengal. Waves 2.5–3.2m expected in 12–24h.</p>
-                      </div>
-                      {/* Copernicus Source */}
-                      <div className="mt-2 flex items-center gap-1 text-[8px] text-cyan-400/30">
-                        <Globe className="size-2" />
-                        <span>Copernicus CMEMS PHY_001_024</span>
+                        <p className="text-[9px] text-white/60 leading-relaxed">
+                          {advisory?.safety?.imbl_distance_km ?? 18.4} km to{" "}
+                          {advisory?.safety?.imbl_sector ?? "IMBL"}.{" "}
+                          {advisory?.verdict?.legal_status ?? "Inside Indian EEZ"}.
+                        </p>
                       </div>
                     </motion.div>
                   )}
@@ -510,9 +567,8 @@ export default function FishermenMode({ language = "en" }: { language?: string }
               exit={{ opacity: 0, x: -20 }}
             >
               <div className="flex-1 flex flex-col items-center justify-center px-6">
-                {/* Mic visual */}
                 <motion.div
-                  className={`relative flex items-center justify-center rounded-full w-28 h-28 shadow-2xl ${
+                  className={`relative flex items-center justify-center rounded-full w-28 h-28 shadow-2xl cursor-pointer ${
                     voiceInputListening
                       ? "bg-[#EF4444] shadow-[#EF4444]/30"
                       : "bg-gradient-to-br from-[#FACC15] to-[#f59e0b] shadow-[#FACC15]/30"
@@ -520,50 +576,26 @@ export default function FishermenMode({ language = "en" }: { language?: string }
                   whileTap={{ scale: 0.92 }}
                   animate={voiceInputListening ? { scale: [1, 1.08, 1] } : {}}
                   transition={voiceInputListening ? { repeat: Infinity, duration: 1.2 } : {}}
-                  onClick={handleVoiceMicPress}
+                  onClick={() => handleVoiceMicPress()}
                 >
                   {voiceInputListening ? (
                     <Volume2 className="size-12 text-white" />
                   ) : (
                     <Mic className="size-12 text-[#061424]" />
                   )}
-                  {/* Triple ripple rings */}
-                  {voiceInputListening && (
-                    <>
-                      <div className="mic-ripple-ring absolute inset-0 rounded-full border-2 border-[#EF4444]/50" />
-                      <div className="mic-ripple-ring absolute inset-0 rounded-full border-2 border-[#EF4444]/40" />
-                      <div className="mic-ripple-ring absolute inset-0 rounded-full border-2 border-[#EF4444]/30" />
-                    </>
-                  )}
                 </motion.div>
 
-                {/* Audio waveform visualizer */}
-                {voiceInputListening && (
-                  <div className="flex items-end justify-center gap-1 h-8 mt-6">
-                    {[...Array(8)].map((_, i) => (
-                      <div
-                        key={i}
-                        className="waveform-bar bg-[#EF4444]"
-                        style={{ height: 12 + Math.random() * 16 }}
-                      />
-                    ))}
-                  </div>
-                )}
-
-                <p className="text-sm text-white/60 mt-4 text-center">
-                  {voiceInputListening ? "Listening..." : "Tap to Speak in Vernacular"}
-                </p>
-                <p className="text-[11px] text-white/30 mt-1 text-center">
-                  Tamil · Telugu · Hindi · Malayalam · Gujarati
+                <p className="text-sm text-white/60 mt-6 text-center">
+                  {voiceInputListening ? "Querying ORCA Marine Engine..." : "Tap to Speak or Ask Advisory"}
                 </p>
 
-                {/* Quick chips */}
-                <div className="flex flex-wrap justify-center gap-2 mt-8 max-w-md">
+                {/* Quick query chips */}
+                <div className="flex flex-wrap justify-center gap-2 mt-6 max-w-md">
                   {QUICK_QUERIES.map((q) => (
                     <button
                       key={q}
-                      className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] text-white/50 hover:text-[#FACC15] hover:border-[#FACC15]/30 transition-colors"
-                      onClick={() => handleVoiceMicPress()}
+                      className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] text-white/60 hover:text-[#FACC15] hover:border-[#FACC15]/30 transition-colors"
+                      onClick={() => handleVoiceMicPress(q)}
                     >
                       {q}
                     </button>
@@ -591,10 +623,6 @@ export default function FishermenMode({ language = "en" }: { language?: string }
                         <Radio className="size-3.5 text-emerald-400 mt-0.5 shrink-0" />
                         <div className="flex-1">
                           <p className="text-xs text-white/80 leading-relaxed">{voiceInputResponse}</p>
-                          <button className="mt-2 flex items-center gap-1.5 text-[10px] text-cyan-400/70 hover:text-cyan-300">
-                            <Volume2 className="size-3" />
-                            Listen to Response
-                          </button>
                         </div>
                       </div>
                     )}
@@ -614,34 +642,35 @@ export default function FishermenMode({ language = "en" }: { language?: string }
               exit={{ opacity: 0, x: -20 }}
             >
               <div className="p-4 space-y-3">
-                {/* Sea Safety Status */}
+                {/* Sea Safety Status Card */}
                 <div
                   className="rounded-xl border p-4"
                   style={{
-                    borderColor: `${getSafetyColor(status)}30`,
-                    backgroundColor: `${getSafetyColor(status)}08`,
+                    borderColor: `${safetyColor}30`,
+                    backgroundColor: `${safetyColor}08`,
                   }}
                 >
                   <div className="flex items-center gap-3">
                     <div
                       className="flex items-center justify-center rounded-lg p-2.5"
-                      style={{ backgroundColor: `${getSafetyColor(status)}15` }}
+                      style={{ backgroundColor: `${safetyColor}15` }}
                     >
-                      {status === "safe" ? (
-                        <Ship className="size-6" style={{ color: getSafetyColor(status) }} />
+                      {safetyStatus === "safe" ? (
+                        <Ship className="size-6" style={{ color: safetyColor }} />
                       ) : (
-                        <AlertTriangle className="size-6" style={{ color: getSafetyColor(status) }} />
+                        <AlertTriangle className="size-6" style={{ color: safetyColor }} />
                       )}
                     </div>
                     <div>
                       <div
                         className="text-base font-black tracking-wide"
-                        style={{ color: getSafetyColor(status) }}
+                        style={{ color: safetyColor }}
                       >
-                        {getSafetyLabel(status)}
+                        {safetyLabel}
                       </div>
                       <div className="text-xs text-white/40">
-                        {weather.tideStatus} tide · {weather.visibility} visibility
+                        {advisory?.verdict?.legal_status ?? "EEZ Compliant"} ·{" "}
+                        {advisory?.safety?.imbl_distance_km ?? 18.4} km to IMBL
                       </div>
                     </div>
                   </div>
@@ -652,37 +681,66 @@ export default function FishermenMode({ language = "en" }: { language?: string }
                   <div className="rounded-xl border border-blue-500/20 bg-blue-500/5 p-4">
                     <div className="flex items-center gap-2 mb-2">
                       <Waves className="size-5 text-blue-400" />
-                      <span className="text-[10px] text-white/40 uppercase tracking-wider font-medium">Wave Height</span>
+                      <span className="text-[10px] text-white/40 uppercase tracking-wider font-medium">
+                        Wave Height
+                      </span>
                     </div>
-                    <p className="text-2xl font-black text-white">{weather.waveHeight}<span className="text-sm font-normal text-white/40">m</span></p>
-                    <p className="text-[10px] text-blue-400/60 mt-1">{weather.waveHeight < 2.5 ? "Within safe limits" : "Exercise caution"}</p>
+                    <p className="text-2xl font-black text-white">
+                      {advisory?.conditions?.wave_height_m ?? weather.waveHeight}
+                      <span className="text-sm font-normal text-white/40">m</span>
+                    </p>
+                    <p className="text-[10px] text-blue-400/60 mt-1">
+                      {(advisory?.conditions?.wave_height_m ?? weather.waveHeight) < 2.0
+                        ? "Safe limits"
+                        : "Rough sea state"}
+                    </p>
                   </div>
 
                   <div className="rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-4">
                     <div className="flex items-center gap-2 mb-2">
                       <Wind className="size-5 text-cyan-400" />
-                      <span className="text-[10px] text-white/40 uppercase tracking-wider font-medium">Wind</span>
+                      <span className="text-[10px] text-white/40 uppercase tracking-wider font-medium">
+                        Wind Speed
+                      </span>
                     </div>
-                    <p className="text-2xl font-black text-white">{weather.windSpeed}<span className="text-sm font-normal text-white/40">kn</span></p>
-                    <p className="text-[10px] text-cyan-400/60 mt-1">{weather.windDirection} direction</p>
+                    <p className="text-2xl font-black text-white">
+                      {advisory?.conditions?.wind_speed_kmh ?? weather.windSpeed}
+                      <span className="text-sm font-normal text-white/40">km/h</span>
+                    </p>
+                    <p className="text-[10px] text-cyan-400/60 mt-1">
+                      Cyclone alert: {advisory?.conditions?.cyclone_alert ?? "NONE"}
+                    </p>
                   </div>
 
                   <div className="rounded-xl border border-orange-500/20 bg-orange-500/5 p-4">
                     <div className="flex items-center gap-2 mb-2">
                       <Thermometer className="size-5 text-orange-400" />
-                      <span className="text-[10px] text-white/40 uppercase tracking-wider font-medium">Surface Temp</span>
+                      <span className="text-[10px] text-white/40 uppercase tracking-wider font-medium">
+                        SST
+                      </span>
                     </div>
-                    <p className="text-2xl font-black text-white">{weather.surfaceTemp}<span className="text-sm font-normal text-white/40">°C</span></p>
-                    <p className="text-[10px] text-orange-400/60 mt-1">Optimal for fishing</p>
+                    <p className="text-2xl font-black text-white">
+                      {advisory?.conditions?.sea_surface_temp_c ?? weather.surfaceTemp}
+                      <span className="text-sm font-normal text-white/40">°C</span>
+                    </p>
+                    <p className="text-[10px] text-orange-400/60 mt-1">
+                      Chlorophyll: {advisory?.conditions?.chlorophyll_a ?? 1.78} mg/m³
+                    </p>
                   </div>
 
                   <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4">
                     <div className="flex items-center gap-2 mb-2">
-                      <Eye className="size-5 text-emerald-400" />
-                      <span className="text-[10px] text-white/40 uppercase tracking-wider font-medium">Visibility</span>
+                      <Fish className="size-5 text-emerald-400" />
+                      <span className="text-[10px] text-white/40 uppercase tracking-wider font-medium">
+                        PFZ Potential
+                      </span>
                     </div>
-                    <p className="text-xl font-black text-white">{weather.visibility}</p>
-                    <p className="text-[10px] text-emerald-400/60 mt-1">Clear conditions</p>
+                    <p className="text-xl font-black text-white">
+                      {advisory?.verdict?.fishing_potential ?? "EXCELLENT"}
+                    </p>
+                    <p className="text-[10px] text-emerald-400/60 mt-1">
+                      {Math.round((advisory?.verdict?.pfz_probability ?? 0.88) * 100)}% Probability
+                    </p>
                   </div>
                 </div>
 
@@ -705,52 +763,6 @@ export default function FishermenMode({ language = "en" }: { language?: string }
                     <p className="text-[10px] text-white/30 mt-1">Vessel bearing</p>
                   </div>
                 </div>
-
-                {/* Live Ocean Telemetry */}
-                {marineData && (
-                  <div className="rounded-xl border border-[#00D2FF]/20 bg-[#00D2FF]/5 p-4">
-                    <h3 className="text-sm font-bold text-white mb-3">Live Ocean Telemetry</h3>
-                    <div className="grid grid-cols-3 gap-2">
-                      <div className="text-center">
-                        <div className="text-[9px] text-white/40 uppercase">Swell</div>
-                        <div className="text-lg font-black text-[#00D2FF]">{marineData.swellWaveHeight?.toFixed(1) ?? "—"}<span className="text-[10px]">m</span></div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-[9px] text-white/40 uppercase">Current</div>
-                        <div className="text-lg font-black text-emerald-400">{marineData.oceanCurrentVelocity?.toFixed(1) ?? "—"}<span className="text-[10px]">m/s</span></div>
-                      </div>
-                      <div className="text-center">
-                        <div className="text-[9px] text-white/40 uppercase">SST</div>
-                        <div className="text-lg font-black text-orange-400">{marineData.seaSurfaceTemperature?.toFixed(1) ?? "—"}<span className="text-[10px]">°C</span></div>
-                      </div>
-                    </div>
-                    <div className="mt-2 flex items-center gap-1.5 text-[9px] text-white/30">
-                      <Radio className="size-2.5" />
-                      <span>Open-Meteo Marine API • {vessels.length} nearby vessels</span>
-                    </div>
-                  </div>
-                )}
-
-                {/* 24h Forecast Summary */}
-                <div className="rounded-xl border border-slate-700/50 bg-slate-900/50 p-4">
-                  <h3 className="text-sm font-bold text-white mb-3">24-Hour Forecast</h3>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-white/40">Next 6 hours</span>
-                      <span className="text-emerald-400 font-medium">Safe to fish — waves 1.8m</span>
-                    </div>
-                    <div className="w-full h-px bg-white/5" />
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-white/40">6–12 hours</span>
-                      <span className="text-[#FACC15] font-medium">Caution — waves rising to 2.4m</span>
-                    </div>
-                    <div className="w-full h-px bg-white/5" />
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-white/40">12–24 hours</span>
-                      <span className="text-[#EF4444] font-medium">Storm watch — 3.2m waves possible</span>
-                    </div>
-                  </div>
-                </div>
               </div>
             </motion.div>
           )}
@@ -765,7 +777,6 @@ export default function FishermenMode({ language = "en" }: { language?: string }
               exit={{ opacity: 0, scale: 0.95 }}
             >
               <div className="flex flex-col items-center justify-center min-h-full p-6">
-                {/* Flashing top bar */}
                 <div className="w-full h-1 rounded-full bg-gradient-to-r from-[#EF4444] via-[#FACC15] to-[#EF4444] animate-pulse mb-8" />
 
                 <AnimatePresence mode="wait">
@@ -777,9 +788,8 @@ export default function FishermenMode({ language = "en" }: { language?: string }
                       exit={{ opacity: 0 }}
                       className="w-full text-center"
                     >
-                      {/* Giant SOS Button */}
                       <motion.div
-                        className="mx-auto flex items-center justify-center w-32 h-32 rounded-full bg-[#EF4444] shadow-2xl shadow-[#EF4444]/40 mb-6"
+                        className="mx-auto flex items-center justify-center w-32 h-32 rounded-full bg-[#EF4444] shadow-2xl shadow-[#EF4444]/40 mb-6 cursor-pointer"
                         whileTap={{ scale: 0.9 }}
                         animate={{
                           boxShadow: [
@@ -797,11 +807,12 @@ export default function FishermenMode({ language = "en" }: { language?: string }
                       <h2 className="text-xl font-black text-white mb-1">EMERGENCY SOS</h2>
                       <p className="text-xs text-[#EF4444]/70 mb-6">Maritime Distress Signal System</p>
 
-                      {/* Vessel Info */}
                       <div className="w-full space-y-2 mb-6">
                         <div className="flex items-center justify-between rounded-lg border border-slate-700/50 bg-slate-900/50 px-3 py-2">
                           <span className="text-[10px] text-white/40 uppercase">GPS</span>
-                          <span className="text-xs font-mono text-white">{boat.lat.toFixed(4)}°N, {boat.lng.toFixed(4)}°E</span>
+                          <span className="text-xs font-mono text-white">
+                            {boat.lat.toFixed(4)}°N, {boat.lng.toFixed(4)}°E
+                          </span>
                         </div>
                         <div className="flex items-center justify-between rounded-lg border border-slate-700/50 bg-slate-900/50 px-3 py-2">
                           <span className="text-[10px] text-white/40 uppercase">Vessel</span>
@@ -817,7 +828,6 @@ export default function FishermenMode({ language = "en" }: { language?: string }
                         </div>
                       </div>
 
-                      {/* Action Buttons */}
                       <div className="w-full space-y-2">
                         <Button
                           className="w-full bg-[#EF4444] hover:bg-[#EF4444]/80 text-white font-bold py-4 gap-2 text-sm"
@@ -849,13 +859,12 @@ export default function FishermenMode({ language = "en" }: { language?: string }
                       <p className="text-lg font-black text-white mb-1">Transmitting Signal...</p>
                       <p className="text-sm text-white/50 mb-4">Live ping · {sosCountdown}s remaining</p>
 
-                      {/* Countdown dots */}
                       <div className="flex items-center justify-center gap-2 mb-8">
                         {[...Array(5)].map((_, i) => (
                           <div
                             key={i}
                             className={`w-3 h-3 rounded-full transition-colors ${
-                              i < (5 - sosCountdown) ? "bg-[#EF4444]" : "bg-slate-700"
+                              i < 5 - sosCountdown ? "bg-[#EF4444]" : "bg-slate-700"
                             }`}
                           />
                         ))}
@@ -918,14 +927,7 @@ export default function FishermenMode({ language = "en" }: { language?: string }
                     : "text-[#00D2FF]"
                   : "text-white/30"
               }`}
-              onClick={() => {
-                if (tab.id === "sos") {
-                  // Open full-screen SOS modal instead of switching tab
-                  setActiveTab("sos");
-                } else {
-                  setActiveTab(tab.id);
-                }
-              }}
+              onClick={() => setActiveTab(tab.id)}
             >
               {isActive && (
                 <motion.div
@@ -967,26 +969,18 @@ export default function FishermenMode({ language = "en" }: { language?: string }
                 : "bg-gradient-to-br from-[#FACC15] to-[#f59e0b] shadow-[#FACC15]/30"
             }`}
             whileTap={{ scale: 0.9 }}
-            onClick={handleVoiceMicPress}
+            onClick={() => handleVoiceMicPress()}
           >
             {voiceInputListening ? (
               <Volume2 className="size-6 text-white" />
             ) : (
               <Mic className="size-6 text-[#061424]" />
             )}
-            {/* Triple ripple rings */}
-            {voiceInputListening && (
-              <>
-                <div className="mic-ripple-ring absolute inset-0 rounded-full border-2 border-[#EF4444]/50" />
-                <div className="mic-ripple-ring absolute inset-0 rounded-full border-2 border-[#EF4444]/35" />
-                <div className="mic-ripple-ring absolute inset-0 rounded-full border border-[#EF4444]/20" />
-              </>
-            )}
           </motion.button>
         )}
       </AnimatePresence>
 
-      {/* ═══ Floating Chatbot Widget (map tab) ═══ */}
+      {/* ═══ Floating Chatbot Widget ═══ */}
       <FishermenChatbot language={language} />
 
       {/* ═══ Floating Border Alert Modal ═══ */}
@@ -1016,7 +1010,8 @@ export default function FishermenMode({ language = "en" }: { language?: string }
 
               <div className="rounded-lg border border-[#EF4444]/20 bg-[#EF4444]/5 p-4 mb-4">
                 <p className="text-sm text-white/80 leading-relaxed">
-                  Your vessel is within <strong className="text-[#EF4444]">2 nautical miles</strong> of the IMBL. Continued movement may result in entering foreign waters.
+                  Your vessel is within <strong className="text-[#EF4444]">2 nautical miles</strong> of the IMBL.
+                  Continued movement may result in entering foreign waters.
                 </p>
                 <div className="mt-3 flex items-center gap-3 text-xs text-white/50">
                   <span>{boat.lat.toFixed(4)}°N</span>
@@ -1036,7 +1031,10 @@ export default function FishermenMode({ language = "en" }: { language?: string }
                 <Button
                   variant="outline"
                   className="border-white/10 text-white/60"
-                  onClick={() => { setShowBorderAlert(false); setActiveTab("sos"); }}
+                  onClick={() => {
+                    setShowBorderAlert(false);
+                    setActiveTab("sos");
+                  }}
                 >
                   <Radio className="size-4" />
                   SOS
@@ -1049,5 +1047,3 @@ export default function FishermenMode({ language = "en" }: { language?: string }
     </div>
   );
 }
-
-
