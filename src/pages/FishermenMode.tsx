@@ -67,6 +67,7 @@ export default function FishermenMode({ language = "en" }: { language?: string }
   const [voiceInputQuery, setVoiceInputQuery] = useState("");
   const [voiceInputResponse, setVoiceInputResponse] = useState("");
   const [batteryLevel] = useState(84);
+  const [mapCenter, setMapCenter] = useState({ lat: 15, lon: 78, zoom: 5 });
   const [aqualinkSites, setAqualinkSites] = useState<AqualinkSite[]>([]);
   const [vessels, setVessels] = useState<AIVessel[]>([]);
 
@@ -262,10 +263,11 @@ export default function FishermenMode({ language = "en" }: { language?: string }
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             >
-              <WindyMapContainer />
+              {/* Windy ECMWF live map iframe */}
+              <WindyMapContainer lat={mapCenter.lat} lon={mapCenter.lon} zoom={mapCenter.zoom} />
 
               {/* ── Floating Safety Status Card ──── */}
-              <div className="absolute top-3 left-3 right-3 z-[1000]">
+              <div className="absolute top-3 left-3 right-3 z-40 pointer-events-auto">
                 <motion.div
                   className="rounded-xl frost-glass p-3 backdrop-blur-md"
                   style={{ borderColor: `${safetyColor}40` }}
@@ -317,7 +319,7 @@ export default function FishermenMode({ language = "en" }: { language?: string }
               </div>
 
               {/* ── Region Quick-Jump Buttons ─── */}
-              <div className="absolute top-16 left-3 right-14 z-[1000] flex flex-wrap gap-1">
+              <div className="absolute top-16 left-3 right-14 z-40 pointer-events-auto flex flex-wrap gap-1">
                 {REGION_PRESETS.map((preset) => (
                   <button
                     key={preset.id}
@@ -327,6 +329,11 @@ export default function FishermenMode({ language = "en" }: { language?: string }
                         (preset as any).lat ?? (preset as any).center?.[0] ?? boat.lat;
                       const targetLng =
                         (preset as any).lng ?? (preset as any).center?.[1] ?? boat.lng;
+                      setMapCenter({
+                        lat: (preset as any).center?.[0] ?? targetLat,
+                        lon: (preset as any).center?.[1] ?? targetLng,
+                        zoom: (preset as any).zoom ?? 6,
+                      });
                       setBoat((b) => ({ ...b, lat: targetLat, lng: targetLng }));
                     }}
                   >
@@ -336,7 +343,7 @@ export default function FishermenMode({ language = "en" }: { language?: string }
               </div>
 
               {/* ── Left: AI Intelligence Panel (collapsible) ─── */}
-              <div className="absolute top-24 left-3 z-[1000] max-w-[280px] sm:max-w-[320px]">
+              <div className="absolute top-24 left-3 z-40 pointer-events-auto max-w-[280px] sm:max-w-[320px]">
                 <button
                   onClick={() => setAiPanelOpen(!aiPanelOpen)}
                   className="frost-glass rounded-xl px-3 py-2 flex items-center gap-2 shadow-2xl w-full"
@@ -410,8 +417,8 @@ export default function FishermenMode({ language = "en" }: { language?: string }
                 </AnimatePresence>
               </div>
 
-              {/* ── Right Center: Layer Controls ─── */}
-              <div className="absolute top-24 right-3 z-[1000] w-48 sm:w-52">
+              {/* ── Right Center: Layer Controls (collapsible) ─── */}
+              <div className="absolute top-24 right-3 z-40 pointer-events-auto w-48 sm:w-52">
                 <button
                   onClick={() => setLayerPanelOpen(!layerPanelOpen)}
                   className="frost-glass rounded-xl px-3 py-2 flex items-center gap-2 shadow-2xl w-full"
@@ -472,8 +479,8 @@ export default function FishermenMode({ language = "en" }: { language?: string }
                 </AnimatePresence>
               </div>
 
-              {/* ── Right: Telemetry & Alerts ─── */}
-              <div className="absolute bottom-20 right-3 z-[1000] w-52 sm:w-60">
+              {/* ── Right: Telemetry & Alerts (collapsible) ─── */}
+              <div className="absolute bottom-20 right-3 z-40 pointer-events-auto w-52 sm:w-60">
                 <button
                   onClick={() => setTelemetryPanelOpen(!telemetryPanelOpen)}
                   className="frost-glass rounded-xl px-3 py-2 flex items-center gap-2 shadow-2xl w-full"
@@ -542,7 +549,7 @@ export default function FishermenMode({ language = "en" }: { language?: string }
               </div>
 
               {/* ── Simulate Border Button ──────────── */}
-              <div className="absolute bottom-4 right-3 z-[1000]">
+              <div className="absolute bottom-4 right-3 z-40 pointer-events-auto">
                 <Button
                   size="sm"
                   variant="destructive"
@@ -913,7 +920,7 @@ export default function FishermenMode({ language = "en" }: { language?: string }
       </div>
 
       {/* ═══ Bottom Navigation Bar ═══ */}
-      <div className="flex-shrink-0 flex items-stretch bg-[#0A1628] border-t border-white/[0.06] safe-bottom relative z-[100]">
+      <div className="flex-shrink-0 flex items-stretch bg-[#0A1628] border-t border-white/[0.06] safe-bottom relative z-50">
         {tabItems.map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -963,7 +970,7 @@ export default function FishermenMode({ language = "en" }: { language?: string }
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
-            className={`absolute bottom-[72px] left-1/2 -translate-x-1/2 z-[101] flex items-center justify-center w-14 h-14 rounded-full shadow-2xl ${
+            className={`absolute bottom-20 left-1/2 -translate-x-1/2 z-40 flex items-center justify-center w-14 h-14 rounded-full shadow-2xl ${
               voiceInputListening
                 ? "bg-[#EF4444] shadow-[#EF4444]/40"
                 : "bg-gradient-to-br from-[#FACC15] to-[#f59e0b] shadow-[#FACC15]/30"

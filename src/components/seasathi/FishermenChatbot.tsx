@@ -218,7 +218,7 @@ export default function FishermenChatbot({ language }: FishermenChatbotProps) {
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
-            className="fixed bottom-24 right-4 z-[999] flex items-center gap-2 rounded-full bg-gradient-to-r from-cyan-400 to-cyan-500 px-5 py-3 text-sm font-bold text-[#061424] shadow-2xl shadow-cyan-400/30 hover:shadow-cyan-400/50 transition-shadow glow-cyan-400"
+            className="fixed bottom-20 right-4 z-40 flex items-center gap-2 rounded-full bg-gradient-to-r from-cyan-400 to-cyan-500 px-5 py-3 text-sm font-bold text-[#061424] shadow-2xl shadow-cyan-400/30 hover:shadow-cyan-400/50 transition-shadow glow-cyan-400 pointer-events-auto"
             onClick={() => setIsOpen(true)}
           >
             <MessageCircle className="size-5" />
@@ -236,7 +236,7 @@ export default function FishermenChatbot({ language }: FishermenChatbotProps) {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 40, scale: 0.95 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="fixed bottom-4 right-4 left-4 sm:left-auto sm:w-[400px] z-[999] flex flex-col max-h-[75vh] rounded-2xl frost-glass shadow-2xl overflow-hidden"
+            className="fixed bottom-4 right-4 left-4 sm:left-auto sm:w-[400px] z-40 flex flex-col max-h-[75vh] rounded-2xl frost-glass shadow-2xl overflow-hidden pointer-events-auto"
           >
             {/* ── Header ─────────────────────── */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-cyan-500/15 bg-[#0A1929]/60">
