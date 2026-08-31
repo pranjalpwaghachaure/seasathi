@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Waves, AlertTriangle, ChevronDown, ArrowLeft } from "lucide-react";
+import { AlertTriangle, ChevronDown, ArrowLeft, LogIn, User, Route, Phone, LogOut, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { LANGUAGES } from "@/lib/mockData";
+import { useAuth, ROLE_LABELS, ROLE_EMOJI } from "@/lib/auth";
 
 export type AppMode = "landing" | "fishermen" | "command";
 
@@ -12,6 +13,7 @@ interface HeaderProps {
   language: string;
   onLanguageChange: (code: string) => void;
   onSOS?: () => void;
+  onOpenAuth?: () => void;
 }
 
 export default function Header({
@@ -20,8 +22,11 @@ export default function Header({
   language,
   onLanguageChange,
   onSOS,
+  onOpenAuth,
 }: HeaderProps) {
   const [langOpen, setLangOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const { user, logout } = useAuth();
   const currentLang = LANGUAGES.find((l) => l.code === language) ?? LANGUAGES[0];
 
   return (
@@ -39,11 +44,12 @@ export default function Header({
               <ArrowLeft className="size-4" />
             </Button>
           )}
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => onModeChange("landing")}>
-            <Waves className="size-6 text-[#00D2FF]" />
-            <span className="text-lg font-bold tracking-tight text-white">
-              SeaSathi
-            </span>
+          <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => onModeChange("landing")}>
+            <img
+              src="/assets/seasathi-logo.svg"
+              alt="SeaSathi"
+              className="h-10 w-auto object-contain"
+            />
           </div>
         </div>
 
@@ -65,7 +71,7 @@ export default function Header({
           </div>
         )}
 
-        {/* Right: Language Selector + SOS */}
+        {/* Right: Language Selector + Auth + SOS */}
         <div className="flex items-center gap-2">
           {/* Language Selector */}
           <div className="relative">
@@ -113,6 +119,89 @@ export default function Header({
                 </>
               )}
             </AnimatePresence>
+          </div>
+
+          {/* Profile / Auth Button */}
+          <div className="relative">
+            {user ? (
+              <>
+                <button
+                  onClick={() => setProfileOpen(!profileOpen)}
+                  className="flex items-center gap-2 rounded-full border border-[#00D2FF]/20 bg-[#00D2FF]/8 px-3 py-1.5 text-xs font-medium text-[#00D2FF] hover:bg-[#00D2FF]/15 transition-colors"
+                >
+                  <div className="flex items-center justify-center size-6 rounded-full bg-[#00D2FF]/20 text-[10px] font-bold text-[#00D2FF]">
+                    {user.name.charAt(0).toUpperCase()}
+                  </div>
+                  <span className="hidden sm:inline">{user.name.split(" ")[0]}</span>
+                  <ChevronDown className="size-3" />
+                </button>
+                <AnimatePresence>
+                  {profileOpen && (
+                    <>
+                      <div
+                        className="fixed inset-0 z-40"
+                        onClick={() => setProfileOpen(false)}
+                      />
+                      <motion.div
+                        initial={{ opacity: 0, y: -8, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -8, scale: 0.95 }}
+                        className="absolute right-0 top-full mt-2 z-50 w-56 overflow-hidden rounded-xl border border-white/10 bg-[#1A2238] shadow-2xl"
+                      >
+                        {/* User Info */}
+                        <div className="border-b border-white/[0.06] px-4 py-3">
+                          <p className="text-sm font-bold text-white truncate">{user.name}</p>
+                          <p className="text-[11px] text-white/40 truncate">{user.email}</p>
+                          <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-[#00D2FF]/10 px-2 py-0.5 text-[10px] font-medium text-[#00D2FF]">
+                            {ROLE_EMOJI[user.role]} {ROLE_LABELS[user.role]}
+                          </span>
+                        </div>
+                        {/* Menu Items */}
+                        <div className="py-1">
+                          {[
+                            { icon: User, label: "Profile" },
+                            { icon: Route, label: "Saved Routes" },
+                            { icon: Phone, label: "Emergency Contacts" },
+                          ].map((item) => (
+                            <button
+                              key={item.label}
+                              className="flex w-full items-center gap-2.5 px-4 py-2 text-sm text-white/60 hover:bg-white/[0.04] hover:text-white transition-colors"
+                              onClick={() => setProfileOpen(false)}
+                            >
+                              <item.icon className="size-4" />
+                              {item.label}
+                            </button>
+                          ))}
+                        </div>
+                        {/* Logout */}
+                        <div className="border-t border-white/[0.06] py-1">
+                          <button
+                            className="flex w-full items-center gap-2.5 px-4 py-2 text-sm text-red-400 hover:bg-red-500/10 transition-colors"
+                            onClick={() => {
+                              logout();
+                              setProfileOpen(false);
+                            }}
+                          >
+                            <LogOut className="size-4" />
+                            Logout
+                          </button>
+                        </div>
+                      </motion.div>
+                    </>
+                  )}
+                </AnimatePresence>
+              </>
+            ) : (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="gap-1.5 border border-[#00D2FF]/30 bg-[#00D2FF]/10 text-[#00D2FF] hover:bg-[#00D2FF]/20 hover:text-[#00D2FF] text-xs font-semibold"
+                onClick={onOpenAuth}
+              >
+                <LogIn className="size-3.5" />
+                <span className="hidden sm:inline">Log In</span>
+              </Button>
+            )}
           </div>
 
           {/* SOS Button */}

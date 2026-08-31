@@ -1,6 +1,5 @@
 import { motion } from "framer-motion";
 import {
-  Waves,
   Shield,
   Satellite,
   Globe,
@@ -224,11 +223,12 @@ export default function Landing({ onEnterMode }: LandingProps) {
             </motion.div>
 
             {/* Title */}
-            <div className="flex items-center justify-center gap-3 mb-5">
-              <Waves className="size-12 text-[#00D2FF]" />
-              <h1 className="text-6xl sm:text-8xl font-black tracking-tight text-white">
-                Sea<span className="text-[#00D2FF]">Sathi</span>
-              </h1>
+            <div className="flex items-center justify-center mb-5">
+              <img
+                src="/assets/seasathi-logo.svg"
+                alt="SeaSathi Logo"
+                className="h-20 sm:h-28 w-auto object-contain"
+              />
             </div>
 
             {/* Main Slogan */}
@@ -507,8 +507,11 @@ export default function Landing({ onEnterMode }: LandingProps) {
       <footer className="bg-white border-t border-gray-200 py-8">
         <div className="max-w-5xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <Waves className="size-4 text-[#0B253C]" />
-            <span className="text-sm font-bold text-[#0F172A]">SeaSathi</span>
+            <img
+              src="/assets/seasathi-logo.svg"
+              alt="SeaSathi"
+              className="h-7 w-auto object-contain"
+            />
             <span className="text-xs text-gray-400">— Marine Safety Intelligence</span>
           </div>
           <div className="flex items-center gap-4 text-xs text-gray-400">

@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 160" fill="none">
+  <!-- Globe circle -->
+  <circle cx="80" cy="80" r="62" stroke="#00B4D8" stroke-width="3" fill="none"/>
+  <circle cx="80" cy="80" r="58" fill="#0a192f"/>
+  
+  <!-- Globe meridians -->
+  <ellipse cx="80" cy="80" rx="30" ry="58" stroke="#0ea5e9" stroke-width="0.8" fill="none" opacity="0.4"/>
+  <ellipse cx="80" cy="80" rx="15" ry="58" stroke="#0ea5e9" stroke-width="0.5" fill="none" opacity="0.3"/>
+  <line x1="22" y1="80" x2="138" y2="80" stroke="#0ea5e9" stroke-width="0.5" opacity="0.3"/>
+  
+  <!-- Ship silhouette -->
+  <path d="M55 95 L70 70 L90 70 L105 95 Z" fill="#e0f2fe" opacity="0.9"/>
+  <path d="M60 95 L65 80 L100 80 L100 95 Z" fill="#38bdf8"/>
+  <rect x="72" y="60" width="2" height="12" fill="#e0f2fe"/>
+  <path d="M74 62 L88 68 L74 70 Z" fill="#e0f2fe" opacity="0.7"/>
+  
+  <!-- Waves -->
+  <path d="M30 105 Q50 95 70 105 Q90 115 110 105 Q130 95 140 105" stroke="#00D2FF" stroke-width="2" fill="none" opacity="0.6"/>
+  <path d="M25 112 Q50 102 75 112 Q100 122 125 112 Q145 105 155 112" stroke="#00B4D8" stroke-width="1.5" fill="none" opacity="0.4"/>
+  
+  <!-- Satellite -->
+  <rect x="110" y="22" width="16" height="6" rx="1" fill="#38bdf8" transform="rotate(-30 118 25)"/>
+  <rect x="106" y="19" width="6" height="12" rx="1" fill="#e0f2fe" transform="rotate(-30 109 25)"/>
+  <rect x="120" y="19" width="6" height="12" rx="1" fill="#e0f2fe" transform="rotate(-30 123 25)"/>
+  
+  <!-- Signal waves from satellite -->
+  <path d="M108 35 Q100 45 108 55" stroke="#00D2FF" stroke-width="1" fill="none" opacity="0.5"/>
+  <path d="M105 38 Q95 48 105 58" stroke="#00D2FF" stroke-width="0.8" fill="none" opacity="0.3"/>
+  
+  <!-- Location pin -->
+  <circle cx="98" cy="68" r="4" fill="#00D2FF" opacity="0.7"/>
+  <circle cx="98" cy="68" r="2" fill="#e0f2fe"/>
+  
+  <!-- Wave underline -->
+  <path d="M155 130 Q200 115 260 130 Q320 145 370 125 Q420 110 470 128 Q510 140 550 125" 
+        stroke="#00B4D8" stroke-width="3" fill="none" opacity="0.7"/>
+  <path d="M155 135 Q210 120 270 135 Q330 150 380 130 Q430 115 480 133 Q520 145 555 130" 
+        stroke="#00D2FF" stroke-width="1.5" fill="none" opacity="0.35"/>
+  
+  <!-- Text: Sea -->
+  <text x="165" y="90" font-family="system-ui, -apple-system, sans-serif" font-size="64" font-weight="800" fill="#ffffff" letter-spacing="-1">Sea</text>
+  
+  <!-- Text: Sathi -->
+  <text x="308" y="90" font-family="system-ui, -apple-system, sans-serif" font-size="64" font-weight="800" fill="#00D2FF" letter-spacing="-1">Sathi</text>
+  
+  <!-- Wave icon above i -->
+  <path d="M528 48 Q534 42 540 48 Q546 54 552 48" stroke="#00D2FF" stroke-width="2.5" fill="none"/>
+  <path d="M528 55 Q534 49 540 55 Q546 61 552 55" stroke="#00D2FF" stroke-width="2" fill="none" opacity="0.6"/>
+</svg>
