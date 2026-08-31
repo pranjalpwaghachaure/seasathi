@@ -286,4 +286,7 @@ if __name__ == "__main__":
 
     result = orca_app.invoke(initial_state)
     print(result["final_report"])
+<<<<<<< Updated upstream
     
+=======
+>>>>>>> Stashed changes
