@@ -451,3 +451,45 @@ button[data-variant].seasathi-btn:active {
   border-color: rgba(0, 210, 255, 0.35);
   box-shadow: 0 0 12px rgba(0, 210, 255, 0.08);
 }
+
+/* ── 5. DARK THERMAL MAP STYLES ──────────────── */
+
+/* Enhanced dark basemap filter */
+.dark-thermal-filter .leaflet-tile-pane,
+.dark-thermal-filter .leaflet-map-pane {
+  filter: brightness(85%) contrast(125%) hue-rotate(180deg) saturate(140%);
+}
+
+/* Wind particle canvas overlay */
+.wind-particle-canvas {
+  position: absolute;
+  inset: 0;
+  z-index: 450;
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+
+/* Thermal legend bar */
+.thermal-legend {
+  background: linear-gradient(to right, #4c1d95, #1e40af, #059669, #84cc16, #f97316, #dc2626);
+}
+
+/* Timeline scrubber track */
+.timeline-track::-webkit-slider-thumb {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #00D2FF;
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(0, 210, 255, 0.5);
+}
+.timeline-track::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #00D2FF;
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 0 8px rgba(0, 210, 255, 0.5);
+}

@@ -123,6 +123,101 @@ function FlyToPreset({ center, zoom }: { center: [number, number]; zoom: number 
   return null;
 }
 
+/* ── Wind Particle Canvas (HTML5 Canvas overlay) ─── */
+function WindParticleCanvas() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    let animId: number;
+    const particles: { x: number; y: number; vx: number; vy: number; life: number; maxLife: number }[] = [];
+    const MAX_PARTICLES = 120;
+
+    const resize = () => {
+      canvas.width = canvas.offsetWidth * window.devicePixelRatio;
+      canvas.height = canvas.offsetHeight * window.devicePixelRatio;
+      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
+    };
+    resize();
+    window.addEventListener("resize", resize);
+
+    const spawnParticle = () => {
+      if (particles.length >= MAX_PARTICLES) return;
+      const x = Math.random() * canvas.offsetWidth;
+      const y = Math.random() * canvas.offsetHeight;
+      // General SW→NE flow (Indian Ocean monsoon-like)
+      const baseAngle = -Math.PI / 4 + (Math.random() - 0.5) * 0.6;
+      const speed = 0.4 + Math.random() * 0.8;
+      particles.push({
+        x, y,
+        vx: Math.cos(baseAngle) * speed,
+        vy: Math.sin(baseAngle) * speed,
+        life: 0,
+        maxLife: 120 + Math.random() * 180,
+      });
+    };
+
+    const animate = () => {
+      ctx.clearRect(0, 0, canvas.offsetWidth, canvas.offsetHeight);
+
+      // Spawn new particles
+      for (let i = 0; i < 3; i++) spawnParticle();
+
+      // Update & draw
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.life++;
+
+        if (p.life > p.maxLife || p.x < -10 || p.x > canvas.offsetWidth + 10 || p.y < -10 || p.y > canvas.offsetHeight + 10) {
+          particles.splice(i, 1);
+          continue;
+        }
+
+        const progress = p.life / p.maxLife;
+        const alpha = Math.sin(progress * Math.PI) * 0.75;
+        const trailLen = 8 + progress * 12;
+
+        // Trail
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y);
+        ctx.lineTo(p.x - p.vx * trailLen, p.y - p.vy * trailLen);
+        ctx.strokeStyle = `rgba(224, 242, 254, ${alpha * 0.5})`;
+        ctx.lineWidth = 1.5;
+        ctx.lineCap = "round";
+        ctx.stroke();
+
+        // Head dot
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, 1.5, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(224, 242, 254, ${alpha})`;
+        ctx.fill();
+      }
+
+      animId = requestAnimationFrame(animate);
+    };
+    animate();
+
+    return () => {
+      cancelAnimationFrame(animId);
+      window.removeEventListener("resize", resize);
+    };
+  }, []);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="wind-particle-canvas"
+      style={{ width: "100%", height: "100%" }}
+    />
+  );
+}
+
 import FishermenChatbot from "@/components/seasathi/FishermenChatbot";
 import IMBLAlertBanner from "@/components/seasathi/IMBLAlertBanner";
 
@@ -319,7 +414,7 @@ export default function FishermenMode({ language = "en" }: { language?: string }
               <MapContainer
                 center={MAP_CENTER}
                 zoom={MAP_ZOOM}
-                className="w-full h-full icy-map-filter"
+                className="w-full h-full dark-thermal-filter"
                 zoomControl={false}
                 attributionControl={false}
                 worldCopyJump={true}
@@ -456,6 +551,9 @@ export default function FishermenMode({ language = "en" }: { language?: string }
                 <BoatTracker boat={boat} />
               </MapContainer>
 
+              {/* ── Animated Wind Particle Canvas ─── */}
+              <WindParticleCanvas />
+
               {/* ── Floating Safety Status Card ──── */}
               <div className="absolute top-3 left-3 right-3 z-[1000]">
                 <motion.div
@@ -535,6 +633,20 @@ export default function FishermenMode({ language = "en" }: { language?: string }
                     <span>💨 {weather.windSpeed}kn {weather.windDirection}</span>
                     <span className="text-white/30">|</span>
                     <span>🌊 {weather.waveHeight}m</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* ── Thermal Legend Bar ───────────── */}
+              <div className="absolute bottom-20 right-3 z-[1000]">
+                <div className="frost-glass rounded-xl px-3 py-2 shadow-2xl">
+                  <div className="text-[8px] font-bold text-white/50 uppercase tracking-wider mb-1 text-center">SST</div>
+                  <div className="thermal-legend h-2 rounded-full w-32" />
+                  <div className="flex items-center justify-between mt-1">
+                    <span className="text-[7px] text-white/30">0°C</span>
+                    <span className="text-[7px] text-white/30">15°C</span>
+                    <span className="text-[7px] text-white/30">25°C</span>
+                    <span className="text-[7px] text-white/30">30°C+</span>
                   </div>
                 </div>
               </div>
