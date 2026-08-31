@@ -1,13 +1,6 @@
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  MapContainer,
-  TileLayer,
-  CircleMarker,
-  Polyline,
-  Popup,
-  useMap,
-} from "react-leaflet";
+import WindyMapContainer from "@/components/seasathi/WindyMapContainer";
 import {
   Mic,
   Waves,
@@ -32,6 +25,18 @@ import {
   X,
   Loader2,
   CheckCircle2,
+  Brain,
+  Zap,
+  Bot,
+  ChevronDown,
+  ChevronRight,
+  Layers,
+  CheckCircle,
+  Clock,
+  Globe,
+  Fish,
+  TrendingUp,
+  Shield,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -61,162 +66,7 @@ import type { MarineConditions, AIVessel } from "@/lib/marineApi";
 /* ── Types ──────────────────────────────────── */
 type MobileTab = "map" | "voice" | "weather" | "sos";
 
-/* ── Boat Tracker (reacts to state) ────────── */
-function BoatTracker({ boat }: { boat: UserBoat }) {
-  const pos = safeBoatPosition(boat);
-  return (
-    <>
-      <CircleMarker
-        center={pos}
-        radius={16}
-        pathOptions={{
-          fillColor: "#38bdf8",
-          fillOpacity: 0.15,
-          color: "#38bdf8",
-          weight: 1,
-          opacity: 0.3,
-        }}
-      >
-        <Popup>
-          <strong>{boat.name}</strong>
-          <br />
-          Speed: {boat.speed} knots
-        </Popup>
-      </CircleMarker>
-      <CircleMarker
-        center={pos}
-        radius={7}
-        pathOptions={{
-          fillColor: "#38bdf8",
-          fillOpacity: 1,
-          color: "#fff",
-          weight: 2,
-        }}
-      >
-        <Popup>
-          <strong>{boat.name}</strong>
-          <br />
-          Heading: {boat.heading}° | Speed: {boat.speed} kn
-        </Popup>
-      </CircleMarker>
-    </>
-  );
-}
 
-/* ── Map Invalidator ──────────────────────────── */
-function MapInvalidator({ center }: { center: [number, number] }) {
-  const map = useMap();
-  useEffect(() => {
-    map.invalidateSize();
-  }, [map]);
-  useEffect(() => {
-    map.flyTo(center, map.getZoom(), { duration: 1 });
-  }, [center, map]);
-  return null;
-}
-
-function FlyToPreset({ center, zoom }: { center: [number, number]; zoom: number }) {
-  const map = useMap();
-  useEffect(() => {
-    map.flyTo(center, zoom, { duration: 1.5 });
-  }, [center, zoom, map]);
-  return null;
-}
-
-/* ── Wind Particle Canvas (HTML5 Canvas overlay) ─── */
-function WindParticleCanvas() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    let animId: number;
-    const particles: { x: number; y: number; vx: number; vy: number; life: number; maxLife: number }[] = [];
-    const MAX_PARTICLES = 120;
-
-    const resize = () => {
-      canvas.width = canvas.offsetWidth * window.devicePixelRatio;
-      canvas.height = canvas.offsetHeight * window.devicePixelRatio;
-      ctx.scale(window.devicePixelRatio, window.devicePixelRatio);
-    };
-    resize();
-    window.addEventListener("resize", resize);
-
-    const spawnParticle = () => {
-      if (particles.length >= MAX_PARTICLES) return;
-      const x = Math.random() * canvas.offsetWidth;
-      const y = Math.random() * canvas.offsetHeight;
-      // General SW→NE flow (Indian Ocean monsoon-like)
-      const baseAngle = -Math.PI / 4 + (Math.random() - 0.5) * 0.6;
-      const speed = 0.4 + Math.random() * 0.8;
-      particles.push({
-        x, y,
-        vx: Math.cos(baseAngle) * speed,
-        vy: Math.sin(baseAngle) * speed,
-        life: 0,
-        maxLife: 120 + Math.random() * 180,
-      });
-    };
-
-    const animate = () => {
-      ctx.clearRect(0, 0, canvas.offsetWidth, canvas.offsetHeight);
-
-      // Spawn new particles
-      for (let i = 0; i < 3; i++) spawnParticle();
-
-      // Update & draw
-      for (let i = particles.length - 1; i >= 0; i--) {
-        const p = particles[i];
-        p.x += p.vx;
-        p.y += p.vy;
-        p.life++;
-
-        if (p.life > p.maxLife || p.x < -10 || p.x > canvas.offsetWidth + 10 || p.y < -10 || p.y > canvas.offsetHeight + 10) {
-          particles.splice(i, 1);
-          continue;
-        }
-
-        const progress = p.life / p.maxLife;
-        const alpha = Math.sin(progress * Math.PI) * 0.75;
-        const trailLen = 8 + progress * 12;
-
-        // Trail
-        ctx.beginPath();
-        ctx.moveTo(p.x, p.y);
-        ctx.lineTo(p.x - p.vx * trailLen, p.y - p.vy * trailLen);
-        ctx.strokeStyle = `rgba(224, 242, 254, ${alpha * 0.5})`;
-        ctx.lineWidth = 1.5;
-        ctx.lineCap = "round";
-        ctx.stroke();
-
-        // Head dot
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, 1.5, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(224, 242, 254, ${alpha})`;
-        ctx.fill();
-      }
-
-      animId = requestAnimationFrame(animate);
-    };
-    animate();
-
-    return () => {
-      cancelAnimationFrame(animId);
-      window.removeEventListener("resize", resize);
-    };
-  }, []);
-
-  return (
-    <canvas
-      ref={canvasRef}
-      className="wind-particle-canvas"
-      style={{ width: "100%", height: "100%" }}
-    />
-  );
-}
 
 import FishermenChatbot from "@/components/seasathi/FishermenChatbot";
 import IMBLAlertBanner from "@/components/seasathi/IMBLAlertBanner";
@@ -253,9 +103,13 @@ export default function FishermenMode({ language = "en" }: { language?: string }
   const [voiceInputResponse, setVoiceInputResponse] = useState("");
   const [batteryLevel] = useState(84);
   const [aqualinkSites, setAqualinkSites] = useState<AqualinkSite[]>([]);
-  const [flyTarget, setFlyTarget] = useState<{ center: [number, number]; zoom: number } | null>(null);
   const [marineData, setMarineData] = useState<MarineConditions | null>(null);
   const [vessels, setVessels] = useState<AIVessel[]>([]);
+  // Collapsible command center panels
+  const [aiPanelOpen, setAiPanelOpen] = useState(false);
+  const [layerPanelOpen, setLayerPanelOpen] = useState(false);
+  const [telemetryPanelOpen, setTelemetryPanelOpen] = useState(false);
+  const [activeCommandLayers, setActiveCommandLayers] = useState<string[]>(["sst", "chlorophyll", "pfz", "imbl", "vessels"]);
 
   // Fetch Aqualink buoy data on mount (all global sites)
   useEffect(() => {
@@ -401,7 +255,7 @@ export default function FishermenMode({ language = "en" }: { language?: string }
 
       {/* ═══ Tab Content Area ═══ */}
       <div className="flex-1 relative min-h-0 overflow-hidden">
-        {/* ── MAP TAB ────────────────────────── */}
+        {/* ── MAP TAB (Windy ECMWF Live Map) ── */}
         <AnimatePresence mode="wait">
           {activeTab === "map" && (
             <motion.div
@@ -411,6 +265,8 @@ export default function FishermenMode({ language = "en" }: { language?: string }
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             >
+              {/* Windy ECMWF live map iframe */}
+              <WindyMapContainer />
               <MapContainer
                 center={MAP_CENTER}
                 zoom={MAP_ZOOM}
@@ -548,12 +404,6 @@ export default function FishermenMode({ language = "en" }: { language?: string }
                   </CircleMarker>
                 ))}
 
-                <BoatTracker boat={boat} />
-              </MapContainer>
-
-              {/* ── Animated Wind Particle Canvas ─── */}
-              <WindParticleCanvas />
-
               {/* ── Floating Safety Status Card ──── */}
               <div className="absolute top-3 left-3 right-3 z-[1000]">
                 <motion.div
@@ -619,36 +469,170 @@ export default function FishermenMode({ language = "en" }: { language?: string }
                 ))}
               </div>
 
-              {/* ── Radar Sweep Overlay ─────────────────── */}
-              <div className="absolute top-16 right-3 z-[1000]">
-                <div className="radar-sweep" />
+              {/* ── Left: AI Intelligence Panel (collapsible) ─── */}
+              <div className="absolute top-3 left-3 z-[1000] max-w-[280px] sm:max-w-[320px]">
+                <button
+                  onClick={() => setAiPanelOpen(!aiPanelOpen)}
+                  className="frost-glass rounded-xl px-3 py-2 flex items-center gap-2 shadow-2xl w-full"
+                >
+                  <div className="flex items-center justify-center size-6 rounded-lg bg-[#FACC15]/10">
+                    <Brain className="size-3.5 text-[#FACC15]" />
+                  </div>
+                  <span className="text-[11px] font-bold text-white">AI Advisory</span>
+                  <span className="ml-auto text-white/40">
+                    {aiPanelOpen ? <ChevronDown className="size-3" /> : <ChevronRight className="size-3" />}
+                  </span>
+                </button>
+                <AnimatePresence>
+                  {aiPanelOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -8, height: 0 }}
+                      animate={{ opacity: 1, y: 0, height: "auto" }}
+                      exit={{ opacity: 0, y: -8, height: 0 }}
+                      className="mt-1.5 frost-glass rounded-xl p-3 shadow-2xl overflow-hidden"
+                    >
+                      <div className="text-[10px] font-bold text-[#FACC15] mb-2 uppercase tracking-wider">Route Advisory</div>
+                      <div className="space-y-2">
+                        <div className="rounded-lg bg-white/[0.03] border border-white/[0.06] p-2">
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <Zap className="size-2.5 text-[#FACC15]" />
+                            <span className="text-[9px] font-bold text-white/70">ISRO SST Feed</span>
+                          </div>
+                          <p className="text-[10px] text-white/50">Sea surface temp 28.4°C, stable gradient along route.</p>
+                        </div>
+                        <div className="rounded-lg bg-white/[0.03] border border-white/[0.06] p-2">
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <Zap className="size-2.5 text-[#FACC15]" />
+                            <span className="text-[9px] font-bold text-white/70">INCOIS Ocean State</span>
+                          </div>
+                          <p className="text-[10px] text-white/50">Waves 1.6m avg, Wind SW 12kn — favorable for 12h.</p>
+                        </div>
+                        <div className="rounded-lg bg-white/[0.03] border border-white/[0.06] p-2">
+                          <div className="flex items-center gap-1.5 mb-1">
+                            <Zap className="size-2.5 text-[#FACC15]" />
+                            <span className="text-[9px] font-bold text-white/70">A* Safe Route</span>
+                          </div>
+                          <p className="text-[10px] text-white/50">Via Waypoint Delta, 134nm. Avoid NE low-pressure zone.</p>
+                        </div>
+                      </div>
+                      <div className="mt-2 flex items-center gap-1.5">
+                        <div className="h-1 flex-1 rounded-full bg-white/10 overflow-hidden">
+                          <div className="h-full rounded-full bg-[#FACC15]" style={{ width: "89%" }} />
+                        </div>
+                        <span className="text-[9px] text-[#FACC15]/70 font-medium">89% confidence</span>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
-              {/* ── Frost Weather Badge ──────────────── */}
-              <div className="absolute bottom-4 left-3 z-[1000]">
-                <div className="frost-badge rounded-xl px-3 py-2 text-[9px] text-white/70">
-                  <div className="flex items-center gap-2">
-                    <span>🧊 {weather.surfaceTemp}°C</span>
-                    <span className="text-white/30">|</span>
-                    <span>💨 {weather.windSpeed}kn {weather.windDirection}</span>
-                    <span className="text-white/30">|</span>
-                    <span>🌊 {weather.waveHeight}m</span>
-                  </div>
-                </div>
+              {/* ── Right Center: Layer Controls (collapsible) ─── */}
+              <div className="absolute top-3 right-3 z-[1000] w-48 sm:w-52">
+                <button
+                  onClick={() => setLayerPanelOpen(!layerPanelOpen)}
+                  className="frost-glass rounded-xl px-3 py-2 flex items-center gap-2 shadow-2xl w-full"
+                >
+                  <Layers className="size-3.5 text-[#00D2FF]" />
+                  <span className="text-[11px] font-bold text-white">Layers</span>
+                  <span className="ml-auto text-white/40">
+                    {layerPanelOpen ? <ChevronDown className="size-3" /> : <ChevronRight className="size-3" />}
+                  </span>
+                </button>
+                <AnimatePresence>
+                  {layerPanelOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -8, height: 0 }}
+                      animate={{ opacity: 1, y: 0, height: "auto" }}
+                      exit={{ opacity: 0, y: -8, height: 0 }}
+                      className="mt-1.5 frost-glass rounded-xl p-2.5 shadow-2xl overflow-hidden"
+                    >
+                      {[
+                        { id: "sst", label: "Sea Surface Temp (SST)" },
+                        { id: "chlorophyll", label: "Chlorophyll Concentration" },
+                        { id: "pfz", label: "INCOIS PFZ Zones" },
+                        { id: "imbl", label: "IMBL / EEZ Boundaries" },
+                        { id: "vessels", label: "Live Vessel Traffic (AIS)" },
+                      ].map((layer) => (
+                        <label key={layer.id} className="flex items-center gap-2 cursor-pointer rounded-lg px-2 py-1.5 hover:bg-white/[0.03] transition-colors">
+                          <input
+                            type="checkbox"
+                            checked={activeCommandLayers.includes(layer.id)}
+                            onChange={() => setActiveCommandLayers((prev) => prev.includes(layer.id) ? prev.filter((l) => l !== layer.id) : [...prev, layer.id])}
+                            className="sr-only peer"
+                          />
+                          <div className={`flex items-center justify-center size-3.5 rounded border transition-colors ${activeCommandLayers.includes(layer.id) ? "bg-[#00D2FF] border-[#00D2FF]" : "border-white/20 bg-transparent"}`}>
+                            {activeCommandLayers.includes(layer.id) && <CheckCircle className="size-2.5 text-[#061424]" />}
+                          </div>
+                          <span className="text-[10px] text-white/60">{layer.label}</span>
+                        </label>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
-              {/* ── Thermal Legend Bar ───────────── */}
-              <div className="absolute bottom-20 right-3 z-[1000]">
-                <div className="frost-glass rounded-xl px-3 py-2 shadow-2xl">
-                  <div className="text-[8px] font-bold text-white/50 uppercase tracking-wider mb-1 text-center">SST</div>
-                  <div className="thermal-legend h-2 rounded-full w-32" />
-                  <div className="flex items-center justify-between mt-1">
-                    <span className="text-[7px] text-white/30">0°C</span>
-                    <span className="text-[7px] text-white/30">15°C</span>
-                    <span className="text-[7px] text-white/30">25°C</span>
-                    <span className="text-[7px] text-white/30">30°C+</span>
-                  </div>
-                </div>
+              {/* ── Right: Telemetry & Alerts (collapsible) ─── */}
+              <div className="absolute bottom-20 right-3 z-[1000] w-52 sm:w-60">
+                <button
+                  onClick={() => setTelemetryPanelOpen(!telemetryPanelOpen)}
+                  className="frost-glass rounded-xl px-3 py-2 flex items-center gap-2 shadow-2xl w-full"
+                >
+                  <Waves className="size-3.5 text-[#00D2FF]" />
+                  <span className="text-[11px] font-bold text-white">Telemetry</span>
+                  <span className="ml-auto text-white/40">
+                    {telemetryPanelOpen ? <ChevronDown className="size-3" /> : <ChevronRight className="size-3" />}
+                  </span>
+                </button>
+                <AnimatePresence>
+                  {telemetryPanelOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 8, height: 0 }}
+                      animate={{ opacity: 1, y: 0, height: "auto" }}
+                      exit={{ opacity: 0, y: 8, height: 0 }}
+                      className="mt-1.5 frost-glass rounded-xl p-3 shadow-2xl overflow-hidden max-h-[50vh] overflow-y-auto"
+                    >
+                      {/* Live Marine Data */}
+                      <div className="grid grid-cols-2 gap-1.5 mb-2">
+                        <div className="rounded-lg border border-blue-500/20 bg-blue-500/5 p-1.5 text-center">
+                          <div className="text-[8px] text-white/40 uppercase">Wave</div>
+                          <div className="text-xs font-bold text-white">{marineData?.waveHeight?.toFixed(1) ?? weather.waveHeight}<span className="text-[8px] text-white/40">m</span></div>
+                        </div>
+                        <div className="rounded-lg border border-cyan-500/20 bg-cyan-500/5 p-1.5 text-center">
+                          <div className="text-[8px] text-white/40 uppercase">Current</div>
+                          <div className="text-xs font-bold text-white">{marineData?.oceanCurrentVelocity?.toFixed(1) ?? "—"}<span className="text-[8px] text-white/40">m/s</span></div>
+                        </div>
+                        <div className="rounded-lg border border-orange-500/20 bg-orange-500/5 p-1.5 text-center">
+                          <div className="text-[8px] text-white/40 uppercase">SST</div>
+                          <div className="text-xs font-bold text-white">{marineData?.seaSurfaceTemperature?.toFixed(1) ?? weather.surfaceTemp}<span className="text-[8px] text-white/40">°C</span></div>
+                        </div>
+                        <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-1.5 text-center">
+                          <div className="text-[8px] text-white/40 uppercase">Swell</div>
+                          <div className="text-xs font-bold text-white">{marineData?.swellWaveHeight?.toFixed(1) ?? "—"}<span className="text-[8px] text-white/40">m</span></div>
+                        </div>
+                      </div>
+                      {/* Salinity */}
+                      <div className="rounded-lg bg-white/[0.03] border border-white/[0.06] p-1.5 mb-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[9px] text-white/40">Salinity</span>
+                          <span className="text-[10px] font-bold text-cyan-300">35.2 PSU</span>
+                        </div>
+                      </div>
+                      {/* IMD Alert */}
+                      <div className="rounded-lg border border-[#EF4444]/20 bg-[#EF4444]/5 p-2">
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <AlertTriangle className="size-2.5 text-[#EF4444]" />
+                          <span className="text-[9px] font-bold text-[#EF4444] uppercase">IMD Advisory</span>
+                        </div>
+                        <p className="text-[9px] text-white/50 leading-relaxed">High wave advisory for Bay of Bengal. Waves 2.5–3.2m expected in 12–24h.</p>
+                      </div>
+                      {/* Copernicus Source */}
+                      <div className="mt-2 flex items-center gap-1 text-[8px] text-cyan-400/30">
+                        <Globe className="size-2" />
+                        <span>Copernicus CMEMS PHY_001_024</span>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
 
               {/* ── Simulate Border Button ──────────── */}
