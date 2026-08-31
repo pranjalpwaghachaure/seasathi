@@ -1,15 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  MapContainer,
-  TileLayer,
-  CircleMarker,
-  Polyline,
-  Polygon,
-  Popup,
-  Tooltip,
-  useMap,
-} from "react-leaflet";
+import WindyMapContainer from "@/components/seasathi/WindyMapContainer";
 import {
   Send,
   ChevronDown,
@@ -20,16 +11,10 @@ import {
   Layers,
   AlertTriangle,
   Radio,
-  BarChart3,
   TrendingUp,
   Zap,
-  Eye,
-  EyeOff,
-  ArrowRight,
   Bot,
-  User,
   Clock,
-  Shield,
   Fish,
   Volume2,
   Waves,
@@ -38,371 +23,19 @@ import {
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import FuelSavingsCard from "@/components/seasathi/FuelSavingsCard";
-import { fetchAqualinkSites, getValidSites, getSiteCoords, getSstColor, hasAlert } from "@/lib/aqualink";
-import type { AqualinkSite } from "@/lib/aqualink";
-import {
-  fetchMarineConditions,
-  fetchEEZGeometry,
-  geojsonToLeafletPositions,
-  generateMockVessels,
-  getVesselColor,
-  getVesselRadius,
-  fetchCopernicusMarineData,
-} from "@/lib/marineApi";
-import type { MarineConditions, EEZFeature, AIVessel, CopernicusMarineData } from "@/lib/marineApi";
+import { fetchMarineConditions, fetchCopernicusMarineData } from "@/lib/marineApi";
+import type { MarineConditions, CopernicusMarineData } from "@/lib/marineApi";
 import {
   MAP_CENTER,
-  MAP_ZOOM,
-  USER_BOAT,
-  FISHING_ZONES,
-  IMBL_POINTS,
-  EEZ_POINTS,
-  SAFE_ROUTE,
-  SST_POLYGONS,
-  CHLOROPHYLL_POLYGONS,
   WEATHER_ALERTS,
   FISH_TRENDS,
   AI_CHAT_HISTORY,
   AI_TOOL_CHAIN,
   LAYER_OPTIONS,
-  BASEMAP_TILES,
   REGION_PRESETS,
-  GLOBAL_EEZ_POLYLINES,
-  GLOBAL_WIND_POSITIONS,
-  getZoneColor,
   type AIMessage,
   type ToolCall,
-  type BasemapId,
 } from "@/lib/mockData";
-
-/* ── Safe coordinate helpers ─────────────── */
-const SAFE_HARBOR: [number, number] = [17.6868, 83.2185];
-function isValidLat(val: unknown): val is number {
-  return typeof val === "number" && Number.isFinite(val) && val >= -90 && val <= 90;
-}
-function isValidLng(val: unknown): val is number {
-  return typeof val === "number" && Number.isFinite(val) && val >= -180 && val <= 180;
-}
-
-/* ── Map Layers Component ──────────────────── */
-function MapLayers({
-  activeLayers,
-  boatPos,
-  aqualinkSites,
-  vessels,
-  eezPositions,
-  copernicusData,
-}: {
-  activeLayers: string[];
-  boatPos: [number, number];
-  aqualinkSites: AqualinkSite[];
-  vessels: AIVessel[];
-  eezPositions: [number, number][][];
-  copernicusData: CopernicusMarineData | null;
-}) {
-  const safeBoatPos: [number, number] = [
-    isValidLat(boatPos[0]) ? boatPos[0] : SAFE_HARBOR[0],
-    isValidLng(boatPos[1]) ? boatPos[1] : SAFE_HARBOR[1],
-  ];
-  return (
-    <>
-      {/* SST Heatmap */}
-      {activeLayers.includes("sst") &&
-        SST_POLYGONS.map((poly, i) => (
-          <Polygon
-            key={`sst-${i}`}
-            positions={poly.bounds}
-            pathOptions={{
-              fillColor: poly.color,
-              fillOpacity: 1,
-              color: "transparent",
-              weight: 0,
-            }}
-          >
-            <Popup>SST: {poly.temp}</Popup>
-          </Polygon>
-        ))}
-
-      {/* Chlorophyll */}
-      {activeLayers.includes("chlorophyll") &&
-        CHLOROPHYLL_POLYGONS.map((poly, i) => (
-          <Polygon
-            key={`chl-${i}`}
-            positions={poly.bounds}
-            pathOptions={{
-              fillColor: poly.color,
-              fillOpacity: 1,
-              color: "transparent",
-              weight: 0,
-            }}
-          >
-            <Popup>Chl-a: {poly.level}</Popup>
-          </Polygon>
-        ))}
-
-      {/* PFZ Markers */}
-      {activeLayers.includes("pfz") &&
-        FISHING_ZONES.map((zone) => (
-          <CircleMarker
-            key={zone.id}
-            center={[zone.lat, zone.lng]}
-            radius={8}
-            pathOptions={{
-              fillColor: getZoneColor(zone.productivity),
-              fillOpacity: 0.35,
-              color: getZoneColor(zone.productivity),
-              weight: 2,
-              opacity: 0.8,
-            }}
-          >
-            <Popup>
-              <strong>{zone.name}</strong>
-              <br />
-              {zone.species.join(", ")}
-            </Popup>
-          </CircleMarker>
-        ))}
-
-      {/* IMBL / EEZ + Global Maritime Boundaries */}
-      {activeLayers.includes("imbl") && (
-        <>
-          <Polyline
-            positions={IMBL_POINTS}
-            pathOptions={{
-              color: "#EF4444",
-              weight: 2.5,
-              dashArray: "8, 6",
-              opacity: 0.8,
-            }}
-          />
-          <Polygon
-            positions={EEZ_POINTS}
-            pathOptions={{
-              fillColor: "#EF4444",
-              fillOpacity: 0.04,
-              color: "#EF4444",
-              weight: 1,
-              dashArray: "4, 4",
-              opacity: 0.3,
-            }}
-          />
-          {/* Global EEZ Maritime Boundaries */}
-          {GLOBAL_EEZ_POLYLINES.map((line, i) => (
-            <Polyline
-              key={`geez-${i}`}
-              positions={line}
-              pathOptions={{
-                color: "#FACC15",
-                weight: 1,
-                dashArray: "6, 4",
-                opacity: 0.25,
-              }}
-            />
-          ))}
-        </>
-      )}
-
-      {/* Aqualink Live Ocean Buoys */}
-      {activeLayers.includes("aqualink") &&
-        getValidSites(aqualinkSites).map((site) => {
-          const coords = getSiteCoords(site);
-          if (!coords) return null;
-          const temp = site.topTemperature?.value ?? 0;
-          const color = getSstColor(temp);
-          const alert = hasAlert(site);
-          return (
-            <CircleMarker
-              key={`aq-${site.id}`}
-              center={coords}
-              radius={6}
-              className={alert ? "glow-cyan-400" : ""}
-              pathOptions={{
-                fillColor: color,
-                fillOpacity: 0.85,
-                color: alert ? "#38bdf8" : color,
-                weight: alert ? 3 : 2,
-                opacity: 0.9,
-              }}
-            >
-              <Tooltip>
-                <span className="text-xs font-medium">{site.name} | Temp: {temp.toFixed(1)}°C</span>
-              </Tooltip>
-              <Popup>
-                <div className="min-w-[200px]" style={{ background: "#0A1929", color: "white", padding: "12px", borderRadius: "8px", border: `1px solid ${alert ? '#38bdf8' : color}40` }}>
-                  <div style={{ fontWeight: 700, fontSize: "13px", marginBottom: 4 }}>{site.name}</div>
-                  <div style={{ fontSize: "11px", color: "rgba(255,255,255,0.5)", marginBottom: 8 }}>{site.country ?? "Ocean Site"}</div>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 6 }}>
-                    <div>
-                      <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.4)", textTransform: "uppercase" }}>SST (Top)</div>
-                      <div style={{ fontSize: "14px", fontWeight: 800, color }}>{temp.toFixed(1)}°C</div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.4)", textTransform: "uppercase" }}>Seabed (Bottom)</div>
-                      <div style={{ fontSize: "14px", fontWeight: 800, color: "#0EA5E9" }}>{site.bottomTemperature?.value?.toFixed(1) ?? "N/A"}°C</div>
-                    </div>
-                  </div>
-                  {/* 3D Ocean Parameters from Copernicus CMEMS */}
-                  {copernicusData && (
-                    <div style={{ marginTop: 8, paddingTop: 8, borderTop: "1px solid rgba(255,255,255,0.08)" }}>
-                      <div style={{ fontSize: "9px", color: "#38bdf8", fontWeight: 700, marginBottom: 4, textTransform: "uppercase" }}>CMEMS PHY_001_024</div>
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4 }}>
-                        <div><span style={{ fontSize: "8px", color: "rgba(255,255,255,0.35)" }}>Current (SMOC)</span><div style={{ fontSize: "11px", fontWeight: 600, color: "#E0F2FE" }}>{copernicusData.surfaceCurrentVelocity?.toFixed(2) ?? '—'} m/s</div></div>
-                        <div><span style={{ fontSize: "8px", color: "rgba(255,255,255,0.35)" }}>Salinity (PSU)</span><div style={{ fontSize: "11px", fontWeight: 600, color: "#E0F2FE" }}>{copernicusData.salinity?.toFixed(1) ?? '—'}</div></div>
-                        <div><span style={{ fontSize: "8px", color: "rgba(255,255,255,0.35)" }}>SSHA</span><div style={{ fontSize: "11px", fontWeight: 600, color: "#E0F2FE" }}>{copernicusData.seaSurfaceHeightAnomaly ?? '—'} cm</div></div>
-                        <div><span style={{ fontSize: "8px", color: "rgba(255,255,255,0.35)" }}>Depth Profile</span><div style={{ fontSize: "9px", fontWeight: 500, color: "rgba(255,255,255,0.5)", lineHeight: 1.4 }}>50 levels · 0–5000m</div></div>
-                      </div>
-                    </div>
-                  )}
-                  <div style={{ marginTop: 8, fontSize: "10px" }}>
-                    <span style={{ color: "rgba(255,255,255,0.4)", marginRight: 4 }}>Heatwave Alert:</span>
-                    <span style={{ color: alert ? "#EF4444" : "#22c55e", fontWeight: 700 }}>{alert ? `Level ${site.weeklyAlertLevel} ⚠️` : "None ✅"}</span>
-                  </div>
-                  <div style={{ marginTop: 8, fontSize: "10px", color: "rgba(255,255,255,0.3)", fontStyle: "italic" }}>Click to calculate safe route to buoy</div>
-                </div>
-              </Popup>
-            </CircleMarker>
-          );
-        })}
-
-      {/* Global Wind Vectors */}
-      {activeLayers.includes("wind") && (
-        <>
-          {GLOBAL_WIND_POSITIONS.map((pos, i) => (
-            <CircleMarker
-              key={`wind-${i}`}
-              center={[pos[0], pos[1]]}
-              radius={3}
-              className="cold-particle"
-              pathOptions={{
-                fillColor: "#E0F2FE",
-                fillOpacity: 0.7,
-                color: "#E0F2FE",
-                weight: 1,
-              }}
-            >
-              <Popup>Wind: SW 14-18 knots</Popup>
-            </CircleMarker>
-          ))}
-        </>
-      )}
-
-      {/* INCOIS PFZ / Chlorophyll WMS Layer */}
-      {activeLayers.includes("incois") && (
-        <TileLayer
-          url="https://iioe-2.incois.gov.in/geoserver/wms?service=WMS&version=1.1.1&request=GetMap&layers=incois:nrta_chlorophyll&styles=&bbox=-90,-180,90,180&width=256&height=256&srs=EPSG:4326&format=image/png&transparent=true"
-          opacity={0.45}
-          attribution='&copy; INCOIS'
-        />
-      )}
-
-      {/* Maritime EEZ Boundaries (from MarineRegions) */}
-      {activeLayers.includes("imbl") && eezPositions.length > 0 &&
-        eezPositions.map((positions, i) => (
-          <Polyline
-            key={`eez-live-${i}`}
-            positions={positions}
-            pathOptions={{
-              color: "#EF4444",
-              weight: 1.5,
-              dashArray: "6, 4",
-              opacity: 0.5,
-            }}
-          />
-        ))}
-
-      {/* Live Vessel Traffic (AIS) */}
-      {activeLayers.includes("vessels") &&
-        vessels.filter((v) => isValidLat(v.lat) && isValidLng(v.lng)).map((vessel) => (
-          <CircleMarker
-            key={`v-${vessel.mmsi}`}
-            center={[vessel.lat, vessel.lng]}
-            radius={getVesselRadius(vessel.status)}
-            pathOptions={{
-              fillColor: getVesselColor(vessel.vesselType),
-              fillOpacity: 0.8,
-              color: getVesselColor(vessel.vesselType),
-              weight: 1.5,
-              opacity: 0.9,
-            }}
-          >
-            <Tooltip>
-              <span className="text-xs font-medium">
-                {vessel.name} | {vessel.speed} kn | {vessel.heading}°
-              </span>
-            </Tooltip>
-            <Popup>
-              <div style={{ background: "#0A1628", color: "white", padding: "10px", borderRadius: "8px", minWidth: 160 }}>
-                <div style={{ fontWeight: 700, fontSize: "12px", marginBottom: 4 }}>{vessel.name}</div>
-                <div style={{ fontSize: "10px", color: "rgba(255,255,255,0.4)", marginBottom: 6 }}>MMSI: {vessel.mmsi}</div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 4 }}>
-                  <div><span style={{ fontSize: "9px", color: "rgba(255,255,255,0.35)", textTransform: "uppercase" as const }}>Speed</span><div style={{ fontSize: "13px", fontWeight: 700, color: getVesselColor(vessel.vesselType) }}>{vessel.speed} kn</div></div>
-                  <div><span style={{ fontSize: "9px", color: "rgba(255,255,255,0.35)", textTransform: "uppercase" as const }}>Heading</span><div style={{ fontSize: "13px", fontWeight: 700 }}>{vessel.heading}°</div></div>
-                </div>
-                <div style={{ marginTop: 6, fontSize: "10px" }}><span style={{ color: "rgba(255,255,255,0.35)", marginRight: 4 }}>Type:</span><span style={{ color: getVesselColor(vessel.vesselType) }}>{vessel.vesselType}</span></div>
-                <div style={{ fontSize: "10px" }}><span style={{ color: "rgba(255,255,255,0.35)", marginRight: 4 }}>Status:</span>{vessel.status}</div>
-                <div style={{ fontSize: "10px" }}><span style={{ color: "rgba(255,255,255,0.35)", marginRight: 4 }}>Dest:</span>{vessel.destination}</div>
-              </div>
-            </Popup>
-          </CircleMarker>
-        ))}
-
-      {/* Safe Route */}
-      <Polyline
-        positions={SAFE_ROUTE}
-        pathOptions={{
-          color: "#06B6D4",
-          weight: 3,
-          opacity: 0.8,
-          dashArray: "10, 6",
-        }}
-      />
-
-      {/* Boat */}
-      <CircleMarker
-        center={safeBoatPos}
-        radius={12}
-        pathOptions={{
-          fillColor: "#38bdf8",
-          fillOpacity: 0.15,
-          color: "#38bdf8",
-          weight: 1,
-          opacity: 0.3,
-        }}
-      />
-      <CircleMarker
-        center={safeBoatPos}
-        radius={6}
-        pathOptions={{
-          fillColor: "#38bdf8",
-          fillOpacity: 1,
-          color: "#fff",
-          weight: 2,
-        }}
-      >
-        <Popup>
-          <strong>{USER_BOAT.name}</strong>
-        </Popup>
-      </CircleMarker>
-    </>
-  );
-}
-
-/* ── Map Invalidation ──────────────────────── */
-function MapInvalidate() {
-  const map = useMap();
-  useEffect(() => {
-    map.invalidateSize();
-  }, [map]);
-  return null;
-}
-
-function FlyToPreset({ center, zoom }: { center: [number, number]; zoom: number }) {
-  const map = useMap();
-  useEffect(() => {
-    map.flyTo(center, zoom, { duration: 1.5 });
-  }, [center, zoom, map]);
-  return null;
-}
 
 /* ── Main Command Center ───────────────────── */
 export default function CommandCenter() {
@@ -414,12 +47,7 @@ export default function CommandCenter() {
     LAYER_OPTIONS.filter((l) => l.checked).map((l) => l.id),
   );
   const [isThinking, setIsThinking] = useState(false);
-  const [aqualinkSites, setAqualinkSites] = useState<AqualinkSite[]>([]);
-  const [basemap, setBasemap] = useState<BasemapId>("dark");
-  const [flyTarget, setFlyTarget] = useState<{ center: [number, number]; zoom: number } | null>(null);
   const [marineData, setMarineData] = useState<MarineConditions | null>(null);
-  const [vessels, setVessels] = useState<AIVessel[]>([]);
-  const [eezFeature, setEezFeature] = useState<EEZFeature | null>(null);
   const [copernicusData, setCopernicusData] = useState<CopernicusMarineData | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
@@ -427,26 +55,9 @@ export default function CommandCenter() {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Fetch Aqualink buoy data on mount (all global sites)
-  useEffect(() => {
-    fetchAqualinkSites().then((sites) => {
-      setAqualinkSites(sites);
-    });
-  }, []);
-
   // Fetch live marine conditions from Open-Meteo
   useEffect(() => {
     fetchMarineConditions(MAP_CENTER[0], MAP_CENTER[1]).then(setMarineData);
-  }, []);
-
-  // Generate mock vessel traffic around map center
-  useEffect(() => {
-    setVessels(generateMockVessels(MAP_CENTER[0], MAP_CENTER[1], 18, 8));
-  }, []);
-
-  // Fetch EEZ boundary from MarineRegions
-  useEffect(() => {
-    fetchEEZGeometry().then(setEezFeature);
   }, []);
 
   // Fetch Copernicus Marine Service data (CMEMS PHY_001_024)
@@ -720,47 +331,19 @@ export default function CommandCenter() {
         </div>
       </div>
 
-      {/* ═══ CENTER: Map Canvas ═══ */}
+      {/* ═══ CENTER: Windy ECMWF Live Map Canvas ═══ */}
       <div className="flex-1 relative">
-        <MapContainer
-          center={MAP_CENTER}
-          zoom={MAP_ZOOM}
-          className="w-full h-full icy-map-filter"
-          zoomControl={true}
-          worldCopyJump={true}
-          minZoom={2}
-          maxZoom={18}
-        >
-          <TileLayer
-            key={basemap}
-            url={BASEMAP_TILES[basemap].url}
-            attribution='&copy; Esri, HERE, Garmin | OpenStreetMap'
-          />
-          <MapInvalidate />
-          {flyTarget && <FlyToPreset center={flyTarget.center} zoom={flyTarget.zoom} />}
-          <MapLayers
-            activeLayers={activeLayers}
-            boatPos={[
-              isValidLat(USER_BOAT.lat) ? USER_BOAT.lat : SAFE_HARBOR[0],
-              isValidLng(USER_BOAT.lng) ? USER_BOAT.lng : SAFE_HARBOR[1],
-            ]}
-            aqualinkSites={aqualinkSites}
-            vessels={vessels}
-            eezPositions={eezFeature ? geojsonToLeafletPositions(eezFeature.geometry) : []}
-            copernicusData={copernicusData}
-          />
-        </MapContainer>
+        <WindyMapContainer />
 
-        {/* ── Region Quick-Jump Buttons ─── */}
+        {/* Region Quick-Jump Badges (informational — Windy has its own controls) */}
         <div className="absolute top-3 left-3 z-[1000] flex flex-wrap gap-1.5">
           {REGION_PRESETS.map((preset) => (
-            <button
+            <div
               key={preset.id}
-              className="rounded-full frost-glass px-2.5 py-1 text-[10px] text-white/70 hover:text-[#FACC15] hover:border-[#FACC15]/30 transition-colors shadow-lg"
-              onClick={() => setFlyTarget({ center: preset.center, zoom: preset.zoom })}
+              className="rounded-full frost-glass px-2.5 py-1 text-[10px] text-white/70 shadow-lg"
             >
               {preset.emoji} {preset.label}
-            </button>
+            </div>
           ))}
         </div>
 
@@ -812,32 +395,10 @@ export default function CommandCenter() {
               </label>
             ))}
           </div>
-          {/* Basemap Selector */}
-          <div className="mt-3 pt-2 border-t border-white/[0.06]">
-            <div className="flex items-center gap-1.5 text-[10px] text-white/40 mb-2 font-medium">
-              <span>Basemap</span>
-            </div>
-            <div className="space-y-1">
-              {(Object.entries(BASEMAP_TILES) as [BasemapId, typeof BASEMAP_TILES[BasemapId]][]).map(([id, tile]) => (
-                <button
-                  key={id}
-                  className={`flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-[11px] transition-colors ${
-                    basemap === id
-                      ? "bg-[#FACC15]/10 text-[#FACC15] border border-[#FACC15]/30"
-                      : "text-white/50 hover:bg-white/[0.03] border border-transparent"
-                  }`}
-                  onClick={() => setBasemap(id)}
-                >
-                  <span>{tile.emoji}</span>
-                  <span>{tile.label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
           <div className="mt-3 pt-2 border-t border-white/[0.06]">
             <div className="flex items-center gap-1.5 text-[10px] text-white/30">
               <div className="size-2 rounded-full bg-emerald-500" />
-              <span>Safe Route (A*)</span>
+              <span>Powered by Windy ECMWF Engine</span>
             </div>
           </div>
         </div>
@@ -879,7 +440,7 @@ export default function CommandCenter() {
             )}
             <div className="mt-2 flex items-center gap-1.5 text-[9px] text-white/25">
               <Radio className="size-2.5" />
-              <span>Source: Open-Meteo Marine API • {vessels.length} vessels tracked</span>
+              <span>Source: Open-Meteo Marine API</span>
             </div>
             {/* Copernicus Marine Service Attribution */}
             <div className="mt-2 flex items-center gap-1.5 text-[8px] text-cyan-400/40">
