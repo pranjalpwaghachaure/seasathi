@@ -12,18 +12,21 @@ import {
   ChevronRight,
 } from "lucide-react";
 
-const WINDY_EMBED_URL =
-  "https://embed.windy.com/embed2.html?" +
-  "lat=20.5937&lon=78.9629" +
-  "&detailLat=17.6868&detailLon=83.2185" +
-  "&width=100%25&height=100%25" +
-  "&zoom=5&level=surface" +
-  "&overlay=wind&product=ecmwf" +
-  "&menu=&message=true&marker=true" +
-  "&calendar=now&pressure=true" +
-  "&type=map&location=coordinates&detail=true" +
-  "&metricWind=kt&metricTemp=%C2%B0C" +
-  "&radarRange=-1";
+function buildWindyUrl(lat: number, lon: number, zoom: number, level: string): string {
+  return (
+    `https://embed.windy.com/embed2.html?` +
+    `lat=${lat}&lon=${lon}` +
+    `&detailLat=${lat}&detailLon=${lon}` +
+    `&width=100%25&height=100%25` +
+    `&zoom=${zoom}&level=${level}` +
+    `&overlay=wind&product=ecmwf` +
+    `&menu=&message=true&marker=true` +
+    `&calendar=none&pressure=true` +
+    `&type=map&location=coordinates&detail=true` +
+    `&metricWind=kt&metricTemp=%C2%B0C` +
+    `&radarRange=-1`
+  );
+}
 
 /* ── Layer Toggle Items ─────────────────── */
 const LAYER_TOGGLES = [
@@ -64,10 +67,13 @@ const WIND_SCALE = [
 
 interface WindyMapContainerProps {
   level?: string;
+  lat?: number;
+  lon?: number;
+  zoom?: number;
 }
 
-export default function WindyMapContainer({ level = "surface" }: WindyMapContainerProps) {
-  const url = WINDY_EMBED_URL.replace("level=surface", `level=${level}`);
+export default function WindyMapContainer({ level = "surface", lat = 15, lon = 78, zoom = 5 }: WindyMapContainerProps) {
+  const url = buildWindyUrl(lat, lon, zoom, level);
 
   const [activeLayer, setActiveLayer] = useState("wind");
   const [isPlaying, setIsPlaying] = useState(true);
@@ -96,7 +102,7 @@ export default function WindyMapContainer({ level = "surface" }: WindyMapContain
       />
 
       {/* ═══ Floating SeaSathi Badge (top-left) ═══ */}
-      <div className="absolute top-4 left-4 z-[1000]">
+      <div className="absolute top-4 left-4 z-40 pointer-events-auto">
         <div className="frost-glass rounded-xl px-4 py-2.5 shadow-2xl flex items-center gap-2.5">
           <div className="flex items-center justify-center size-7 rounded-lg bg-[#FACC15]/10">
             <Zap className="size-4 text-[#FACC15]" />
@@ -114,7 +120,7 @@ export default function WindyMapContainer({ level = "surface" }: WindyMapContain
       </div>
 
       {/* ═══ Right Vertical Layer Toggles ═══ */}
-      <div className="absolute top-4 right-4 z-[1000] flex flex-col gap-1.5">
+      <div className="absolute top-4 right-4 z-40 pointer-events-auto flex flex-col gap-1.5">
         {LAYER_TOGGLES.map((layer) => {
           const isActive = activeLayer === layer.id;
           return (
@@ -144,7 +150,7 @@ export default function WindyMapContainer({ level = "surface" }: WindyMapContain
       </div>
 
       {/* ═══ Bottom Timeline Scrubber ═══ */}
-      <div className="absolute bottom-14 left-1/2 -translate-x-1/2 z-[1000] w-[min(90%,600px)]">
+      <div className="absolute bottom-14 left-1/2 -translate-x-1/2 z-40 pointer-events-auto w-[min(90%,600px)]">
         <div className="frost-glass rounded-xl px-4 py-3 shadow-2xl">
           {/* Day labels + play controls */}
           <div className="flex items-center gap-3 mb-2">
@@ -210,7 +216,7 @@ export default function WindyMapContainer({ level = "surface" }: WindyMapContain
       </div>
 
       {/* ═══ Bottom-Right Thermal Legend Bar ═══ */}
-      <div className="absolute bottom-14 right-4 z-[1000]">
+      <div className="absolute bottom-14 right-4 z-40 pointer-events-auto">
         <div className="frost-glass rounded-xl px-3 py-2.5 shadow-2xl">
           <div className="text-[9px] font-bold text-white/60 uppercase tracking-wider mb-1.5 text-center">
             Sea Surface Temperature
