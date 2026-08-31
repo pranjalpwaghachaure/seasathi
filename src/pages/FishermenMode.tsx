@@ -114,6 +114,12 @@ export default function FishermenMode({ language = "en" }: { language?: string }
   const safetyColor = safetyStatus === "safe" ? "#22c55e" : "#EF4444";
   const safetyLabel = advisory?.verdict?.overall_status ?? "SAFE TO VENTURE";
 
+  /* ── Location Pick Handler (From Map Pinning) ────────────── */
+  const handleLocationSelect = useCallback((lat: number, lng: number) => {
+    setBoat((prev) => ({ ...prev, lat, lng }));
+    setMapCenter((prev) => ({ ...prev, lat, lon: lng }));
+  }, []);
+
   /* ── Voice Input (center mic) ────────────── */
   const handleVoiceMicPress = useCallback(
     async (queryText?: string) => {
@@ -263,8 +269,13 @@ export default function FishermenMode({ language = "en" }: { language?: string }
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             >
-              {/* Windy ECMWF live map iframe */}
-              <WindyMapContainer lat={mapCenter.lat} lon={mapCenter.lon} zoom={mapCenter.zoom} />
+              {/* Windy ECMWF live map iframe with pin listener */}
+              <WindyMapContainer
+                lat={mapCenter.lat}
+                lon={mapCenter.lon}
+                zoom={mapCenter.zoom}
+                onLocationSelect={handleLocationSelect}
+              />
 
               {/* ── Floating Safety Status Card ──── */}
               <div className="absolute top-3 left-3 right-3 z-40 pointer-events-auto">
