@@ -43,9 +43,7 @@ import {
   MAP_CENTER,
   MAP_ZOOM,
   USER_BOAT,
-  FISHING_ZONES,
-  IMBL_POINTS,
-  SAFE_FISHING_POINTS,
+
   DEFAULT_WEATHER,
   QUICK_QUERIES,
   VOICE_QUERIES,
@@ -55,12 +53,12 @@ import {
   getSafetyStatus,
   getSafetyLabel,
   getSafetyColor,
-  getZoneColor,
+
   type UserBoat,
 } from "@/lib/mockData";
-import { fetchAqualinkSites, getValidSites, getSiteCoords, getSstColor, hasAlert } from "@/lib/aqualink";
+import { fetchAqualinkSites } from "@/lib/aqualink";
 import type { AqualinkSite } from "@/lib/aqualink";
-import { fetchMarineConditions, generateMockVessels, getVesselColor, getVesselRadius } from "@/lib/marineApi";
+import { fetchMarineConditions, generateMockVessels } from "@/lib/marineApi";
 import type { MarineConditions, AIVessel } from "@/lib/marineApi";
 
 /* ── Types ──────────────────────────────────── */
@@ -71,20 +69,7 @@ type MobileTab = "map" | "voice" | "weather" | "sos";
 import FishermenChatbot from "@/components/seasathi/FishermenChatbot";
 import IMBLAlertBanner from "@/components/seasathi/IMBLAlertBanner";
 
-/* ── Safe coordinates helper ────────────────── */
-const SAFE_HARBOR: [number, number] = [17.6868, 83.2185];
-function safeCoord(val: number | undefined, fallback: number): number {
-  return Number.isFinite(val) ? (val as number) : fallback;
-}
-function safeBoatPosition(b: UserBoat): [number, number] {
-  return [safeCoord(b.lat, SAFE_HARBOR[0]), safeCoord(b.lng, SAFE_HARBOR[1])];
-}
-function isValidLat(val: unknown): val is number {
-  return typeof val === "number" && Number.isFinite(val) && val >= -90 && val <= 90;
-}
-function isValidLng(val: unknown): val is number {
-  return typeof val === "number" && Number.isFinite(val) && val >= -180 && val <= 180;
-}
+
 
 /* ── Main Fishermen Mode PWA Component ─────── */
 export default function FishermenMode({ language = "en" }: { language?: string }) {
@@ -267,142 +252,6 @@ export default function FishermenMode({ language = "en" }: { language?: string }
             >
               {/* Windy ECMWF live map iframe */}
               <WindyMapContainer />
-              <MapContainer
-                center={MAP_CENTER}
-                zoom={MAP_ZOOM}
-                className="w-full h-full dark-thermal-filter"
-                zoomControl={false}
-                attributionControl={false}
-                worldCopyJump={true}
-                minZoom={2}
-                maxZoom={18}
-              >
-                <TileLayer
-                  url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}"
-                  attribution='&copy; Esri, HERE, Garmin'
-                />
-                <MapInvalidator center={safeBoatPosition(boat)} />
-                {flyTarget && (
-                  <FlyToPreset center={flyTarget.center} zoom={flyTarget.zoom} />
-                )}
-
-                {/* Safe Fishing Zones */}
-                {FISHING_ZONES.filter((z) => isValidLat(z.lat) && isValidLng(z.lng)).map((zone) => (
-                  <CircleMarker
-                    key={zone.id}
-                    center={[zone.lat, zone.lng]}
-                    radius={10}
-                    pathOptions={{
-                      fillColor: getZoneColor(zone.productivity),
-                      fillOpacity: 0.3,
-                      color: getZoneColor(zone.productivity),
-                      weight: 2,
-                      opacity: 0.7,
-                    }}
-                  >
-                    <Popup>
-                      <strong>{zone.name}</strong>
-                      <br />
-                      Productivity: {zone.productivity}
-                      <br />
-                      Species: {zone.species.join(", ")}
-                    </Popup>
-                  </CircleMarker>
-                ))}
-
-                {/* IMBL Line */}
-                <Polyline
-                  positions={IMBL_POINTS}
-                  pathOptions={{
-                    color: "#EF4444",
-                    weight: 2.5,
-                    dashArray: "8, 6",
-                    opacity: 0.8,
-                  }}
-                />
-
-                {/* Aqualink Live Ocean Buoys */}
-                {getValidSites(aqualinkSites).slice(0, 30).map((site) => {
-                  const coords = getSiteCoords(site);
-                  if (!coords) return null;
-                  const temp = site.topTemperature?.value ?? 0;
-                  const color = getSstColor(temp);
-                  const alert = hasAlert(site);
-                  return (
-                    <>
-                      {/* Pulsing glow ring for alert buoys */}
-                      {alert && (
-                        <CircleMarker
-                          key={`aq-glow-${site.id}`}
-                          center={coords}
-                          radius={10}
-                          className="glow-cyan-400"
-                          pathOptions={{
-                            fillColor: "transparent",
-                            fillOpacity: 0,
-                            color: "#22d3ee",
-                            weight: 1.5,
-                            opacity: 0.5,
-                          }}
-                        />
-                      )}
-                      <CircleMarker
-                        key={`aq-${site.id}`}
-                        center={coords}
-                        radius={5}
-                        pathOptions={{
-                          fillColor: color,
-                          fillOpacity: 0.85,
-                          color: color,
-                          weight: 2,
-                          opacity: 0.9,
-                        }}
-                      >
-                        <Popup>
-                          <strong>{site.name}</strong>
-                          <br />
-                          SST: {temp.toFixed(1)}°C {alert ? "⚠️" : ""}
-                        </Popup>
-                      </CircleMarker>
-                    </>
-                  );
-                })}
-
-                {/* Safe Fishing Points */}
-                {SAFE_FISHING_POINTS.filter((p) => isValidLat(p[0]) && isValidLng(p[1])).map((point, i) => (
-                  <CircleMarker
-                    key={`sf-${i}`}
-                    center={point}
-                    radius={5}
-                    pathOptions={{
-                      fillColor: "#22c55e",
-                      fillOpacity: 0.5,
-                      color: "#22c55e",
-                      weight: 1,
-                    }}
-                  />
-                ))}
-
-                {/* Live Vessel Traffic */}
-                {vessels.filter((v) => isValidLat(v.lat) && isValidLng(v.lng)).map((v) => (
-                  <CircleMarker
-                    key={`v-${v.mmsi}`}
-                    center={[v.lat, v.lng]}
-                    radius={getVesselRadius(v.status)}
-                    pathOptions={{
-                      fillColor: getVesselColor(v.vesselType),
-                      fillOpacity: 0.7,
-                      color: getVesselColor(v.vesselType),
-                      weight: 1,
-                    }}
-                  >
-                    <Popup>
-                      <strong style={{ fontSize: 11 }}>{v.name}</strong>
-                      <br />
-                      <span style={{ fontSize: 10 }}>{v.speed} kn · {v.heading}° · {v.vesselType}</span>
-                    </Popup>
-                  </CircleMarker>
-                ))}
 
               {/* ── Floating Safety Status Card ──── */}
               <div className="absolute top-3 left-3 right-3 z-[1000]">
@@ -462,7 +311,7 @@ export default function FishermenMode({ language = "en" }: { language?: string }
                   <button
                     key={preset.id}
                     className="rounded-full frost-glass px-2 py-0.5 text-[9px] text-white/60 hover:text-[#FACC15] hover:border-[#FACC15]/30 transition-colors"
-                    onClick={() => setFlyTarget({ center: preset.center, zoom: preset.zoom })}
+                    onClick={() => { /* Fly-to handled by Windy map */ }}
                   >
                     {preset.emoji} {preset.label}
                   </button>
