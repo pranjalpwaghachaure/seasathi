@@ -116,7 +116,6 @@ def compute_geospatial_boundaries(lat: float, lon: float) -> Dict[str, Any]:
 
 def get_pfz_oceanography(lat: float, lon: float) -> Dict[str, Any]:
     """Generates oceanographic telemetry and PFZ probability index."""
-    # Deterministic telemetry estimation based on latitude/season
     base_sst = 28.4 - (abs(lat - 18.0) * 0.15)
     chlorophyll = round(1.5 + (0.35 * (lon % 2)), 2)
     pfz_probability = round(min(0.95, max(0.50, 0.75 + (chlorophyll * 0.08) - (abs(base_sst - 28.0) * 0.05))), 2)
@@ -137,10 +136,7 @@ def planner_node(state: OrcaState) -> Dict[str, Any]:
     print("🤖 [Planner Agent]: Analyzing user request...")
     query = state["query"]
     
-    # Coordinate extraction with regex fallback for reliability
-    coord_match = re.search(r"[-+]?\d*\.\d+|\d+", query)
     coords = re.findall(r"[-+]?\d*\.\d+|\d+", query)
-    
     lat = float(coords[0]) if len(coords) >= 2 else 18.9
     lon = float(coords[1]) if len(coords) >= 2 else 72.8
     
@@ -171,11 +167,9 @@ def synthesis_node(state: OrcaState) -> Dict[str, Any]:
     w = state["weather_data"]
     geo = state["geospatial_data"]
 
-    # Structured prompt for synthesis
     sys_prompt = (
         "You are ORCA (Ocean Reasoning with Collaborative Agents), an expert maritime intelligence system. "
-        "Synthesize the provided deterministic tool payload into a crisp, actionable operational report. "
-        "Do not invent any numbers; strictly condition on the metrics provided."
+        "Synthesize the provided deterministic tool payload into a crisp, actionable operational report."
     )
     
     user_payload = f"""
@@ -187,6 +181,7 @@ def synthesis_node(state: OrcaState) -> Dict[str, Any]:
     - Geospatial Data: Inside EEZ={geo['inside_indian_eez']}, Nearest IMBL Distance={geo['nearest_imbl_distance_km']} km ({geo['nearest_boundary_sector']}), Geofence Alert={geo['geofence_alert']}, Safe Buffer={geo['minimum_safe_buffer_km']} km
     """
 
+    report_text = None
     if llm:
         try:
             response = llm.invoke([
@@ -196,10 +191,7 @@ def synthesis_node(state: OrcaState) -> Dict[str, Any]:
             report_text = response.content
         except Exception:
             report_text = None
-    else:
-        report_text = None
 
-    # Deterministic fallback formatter if LLM is unavailable or offline
     if not report_text:
         verdict = "PROCEED WITH CAUTION" if w['safety_status'] == "SAFE" else "NO-GO / HIGH RISK"
         report_text = f"""
@@ -242,39 +234,42 @@ def synthesis_node(state: OrcaState) -> Dict[str, Any]:
 def build_orca_graph():
     workflow = StateGraph(OrcaState)
 
-    # Register Nodes
     workflow.add_node("planner", planner_node)
     workflow.add_node("pfz_agent", pfz_agent_node)
     workflow.add_node("weather_agent", weather_agent_node)
     workflow.add_node("geospatial_agent", geospatial_agent_node)
     workflow.add_node("synthesis", synthesis_node)
 
-    # Set Entry Point
     workflow.set_entry_point("planner")
 
-    # Parallel Execution edges
     workflow.add_edge("planner", "pfz_agent")
     workflow.add_edge("planner", "weather_agent")
     workflow.add_edge("planner", "geospatial_agent")
 
-    # Convergence into Synthesis
     workflow.add_edge("pfz_agent", "synthesis")
     workflow.add_edge("weather_agent", "synthesis")
     workflow.add_edge("geospatial_agent", "synthesis")
 
-    # End
     workflow.add_edge("synthesis", END)
 
     return workflow.compile()
 
 # =====================================================================
-# 5. EXECUTION ENTRY POINT
+# 5. EXECUTION ENTRY POINT (INTERACTIVE)
 # =====================================================================
 if __name__ == "__main__":
     print("\n--- INITIATING ORCA MARINE SYSTEM ---\n")
     
-    query = "Where is the best fishing zone near coordinates (18.9, 72.8), and is it safe to sail tomorrow morning?"
-    print(f"USER QUERY: {query}\n")
+    user_input = input("Enter coordinates or query (e.g., 18.9, 72.8): ").strip()
+    
+    if not user_input:
+        query = "Where is the best fishing zone near coordinates (18.9, 72.8), and is it safe to sail tomorrow morning?"
+    elif re.match(r"^[-+]?\d*\.?\d+,\s*[-+]?\d*\.?\d+$", user_input):
+        query = f"Where is the best fishing zone near coordinates ({user_input}), and is it safe to sail tomorrow morning?"
+    else:
+        query = user_input
+
+    print(f"\nUSER QUERY: {query}\n")
 
     orca_app = build_orca_graph()
     
