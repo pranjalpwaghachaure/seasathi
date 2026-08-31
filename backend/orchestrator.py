@@ -134,11 +134,19 @@ def get_pfz_oceanography(lat: float, lon: float) -> Dict[str, Any]:
 
 def planner_node(state: OrcaState) -> Dict[str, Any]:
     print("🤖 [Planner Agent]: Analyzing user request...")
-    query = state["query"]
+    query = state.get("query", "")
     
-    coords = re.findall(r"[-+]?\d*\.\d+|\d+", query)
-    lat = float(coords[0]) if len(coords) >= 2 else 18.9
-    lon = float(coords[1]) if len(coords) >= 2 else 72.8
+    # Prioritize explicit coordinates from state
+    lat = state.get("latitude")
+    lon = state.get("longitude")
+
+    if not lat or not lon or (lat == 0.0 and lon == 0.0):
+        coords = re.findall(r"[-+]?\d*\.\d+|\d+", query)
+        lat = float(coords[0]) if len(coords) >= 2 else 18.9
+        lon = float(coords[1]) if len(coords) >= 2 else 72.8
+    
+    print(f"   -> Plan Generated: Evaluating Coordinates ({lat}, {lon})")
+    return {"latitude": lat, "longitude": lon}
     
     print(f"   -> Plan Generated: Evaluating Coordinates ({lat}, {lon})")
     return {"latitude": lat, "longitude": lon}

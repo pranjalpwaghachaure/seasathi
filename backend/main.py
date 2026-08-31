@@ -9,10 +9,8 @@ from schemas import (
     SafetyBoundary
 )
 
-# Import the graph builder and OrcaState type from Aradhya's orchestrator
 from orchestrator import build_orca_graph, OrcaState
 
-# Compile the LangGraph engine on startup
 orca_pipeline = build_orca_graph()
 
 app = FastAPI(
@@ -21,7 +19,6 @@ app = FastAPI(
     description="Agentic Decision Support Backend for Ocean State, PFZ, and Safety Monitoring"
 )
 
-# Enable CORS for Pranjal's React/Vite frontend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -30,14 +27,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-def parse_target_coordinates(query: str = None, lat: float = None, lon: float = None):
+def resolve_coordinates(lat: float = None, lon: float = None, query: str = None):
+    # Always prioritize explicit coordinates from map pin
     if lat is not None and lon is not None:
         return float(lat), float(lon)
+    
+    # Only regex coordinates if query explicitly has lat/lon patterns like "15.4, 73.8"
     if query:
-        coords = re.findall(r"[-+]?\d*\.\d+|\d+", query)
-        if len(coords) >= 2:
-            return float(coords[0]), float(coords[1])
-    return 18.9, 72.8
+        match = re.search(r"(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)", query)
+        if match:
+            return float(match.group(1)), float(match.group(2))
+
+    return 15.0, 78.0  # Default Indian Ocean reference
 
 @app.get("/health")
 def health_check():
@@ -46,15 +47,14 @@ def health_check():
 @app.post("/api/v1/advisory", response_model=MarineAdvisoryResponse)
 async def generate_marine_advisory(payload: AdvisoryRequest):
     try:
-        target_lat, target_lon = parse_target_coordinates(
-            query=payload.query,
+        target_lat, target_lon = resolve_coordinates(
             lat=payload.latitude,
-            lon=payload.longitude
+            lon=payload.longitude,
+            query=payload.query
         )
 
-        formatted_query = payload.query or f"Evaluate coordinates ({target_lat}, {target_lon})"
+        formatted_query = payload.query or f"Evaluate coordinates at latitude {target_lat}, longitude {target_lon}"
 
-        # Initialize the LangGraph state matching Aradhya's OrcaState
         initial_state: OrcaState = {
             "query": formatted_query,
             "latitude": target_lat,
@@ -66,7 +66,7 @@ async def generate_marine_advisory(payload: AdvisoryRequest):
             "final_report": None
         }
 
-        # Execute the multi-agent graph
+        # Run LangGraph pipeline
         state_output = orca_pipeline.invoke(initial_state)
 
         pfz = state_output.get("pfz_data") or {}
@@ -74,7 +74,6 @@ async def generate_marine_advisory(payload: AdvisoryRequest):
         geo = state_output.get("geospatial_data") or {}
         final_markdown = state_output.get("final_report") or ""
 
-        # Map to structured schema
         is_eez = geo.get("inside_indian_eez", True)
         safety_status = weather.get("safety_status", "SAFE")
         overall_status = "PROCEED WITH CAUTION" if safety_status == "SAFE" else "NO-GO / HIGH RISK"
@@ -98,14 +97,14 @@ async def generate_marine_advisory(payload: AdvisoryRequest):
         safety = SafetyBoundary(
             eez_compliant=is_eez,
             imbl_distance_km=float(geo.get("nearest_imbl_distance_km", 0.0)),
-            imbl_sector=geo.get("nearest_boundary_sector", "Unknown"),
+            imbl_sector=geo.get("nearest_boundary_sector", "Arabian Sea / Bay of Bengal"),
             geofence_warning=geo.get("geofence_alert", "CLEAR"),
             safe_buffer_km=float(geo.get("minimum_safe_buffer_km", 15.0))
         )
 
         return MarineAdvisoryResponse(
-            latitude=state_output.get("latitude", target_lat),
-            longitude=state_output.get("longitude", target_lon),
+            latitude=target_lat,
+            longitude=target_lon,
             verdict=verdict,
             conditions=conditions,
             safety=safety,

@@ -114,7 +114,7 @@ export default function FishermenMode({ language = "en" }: { language?: string }
   const safetyColor = safetyStatus === "safe" ? "#22c55e" : "#EF4444";
   const safetyLabel = advisory?.verdict?.overall_status ?? "SAFE TO VENTURE";
 
-  /* ── Location Pick Handler (From Map Pinning) ────────────── */
+  /* ── Map Location Select Callback ────────── */
   const handleLocationSelect = useCallback((lat: number, lng: number) => {
     setBoat((prev) => ({ ...prev, lat, lng }));
     setMapCenter((prev) => ({ ...prev, lat, lon: lng }));
@@ -999,7 +999,7 @@ export default function FishermenMode({ language = "en" }: { language?: string }
       </AnimatePresence>
 
       {/* ═══ Floating Chatbot Widget ═══ */}
-      <FishermenChatbot language={language} />
+      <FishermenChatbot language={language} lat={boat.lat} lng={boat.lng} />
 
       {/* ═══ Floating Border Alert Modal ═══ */}
       <AnimatePresence>
